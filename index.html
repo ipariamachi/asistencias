@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asistencia</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; text-align: center; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input, button { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:active { background: #218838; }
+        #mensaje { margin-top: 15px; font-weight: bold; font-size: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Control de Asistencia</h2>
+    <p>Ingresa tu nombre y tómate la foto del momento</p>
+    
+    <input type="text" id="nombreTrabajador" placeholder="Tu Nombre Completo" required>
+    
+    <!-- CAMARA CON BLOQUEO DE GALERÍA (Obliga a tomar foto en vivo) -->
+    <input type="file" accept="image/*" capture="user" id="fotoInput" required>
+    
+    <button onclick="registrarAsistencia()">Registrar Asistencia</button>
+    
+    <p id="mensaje"></p>
+</div>
+
+<script>
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxnFAUGk7fE-szwiFw99ZPeRBFbyJpUPYhrthKBdYhEijTQNNpUR_EBEcZaLOHJQVUimA/exec";
+
+    function registrarAsistencia() {
+        const nombre = document.getElementById("nombreTrabajador").value;
+        const fileInput = document.getElementById("fotoInput");
+        const mensaje = document.getElementById("mensaje");
+
+        if (!nombre.trim()) {
+            alert("Por favor ingresa tu nombre.");
+            return;
+        }
+        if (fileInput.files.length === 0) {
+            alert("Debes tomar una foto.");
+            return;
+        }
+
+        mensaje.style.color = "#333";
+        mensaje.innerText = "Enviando registro...";
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const base64String = event.target.result.split(',')[1];
+            
+            const datos = {
+                trabajador: nombre,
+                gps: "No requerido", // Ya no usa GPS
+                fotoBase64: base64String,
+                mimeType: file.type,
+                nombreArchivo: "asistencia_" + Date.now() + ".jpg"
+            };
+
+            fetch(URL_APPS_SCRIPT, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datos)
+            })
+            .then(() => {
+                mensaje.style.color = "green";
+                mensaje.innerText = "¡Asistencia registrada con éxito!";
+                setTimeout(() => { location.reload(); }, 3000);
+            })
+            .catch(error => {
+                mensaje.style.color = "red";
+                mensaje.innerText = "Error al enviar. Intenta de nuevo.";
+                console.error(error);
+            });
+        };
+
+        reader.readAsDataURL(file);
+    }
+</script>
+
+</body>
+</html>
