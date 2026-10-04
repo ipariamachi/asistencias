@@ -7,56 +7,98 @@
     <!-- Librería de Confeti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; text-align: center; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        input, button { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
-        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:active { background: #218838; }
+        body { font-family: Arial, sans-serif; background: #eef2f3; padding: 15px; text-align: center; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 380px; margin: auto; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; text-align: center; font-weight: bold; color: #333; }
         
+        /* BOTÓN CIRCULAR DE CÁMARA MODERNO */
+        .camera-container { margin: 20px 0; }
+        #fotoInput { display: none; }
+        .camera-btn {
+            width: 90px;
+            height: 90px;
+            background: #007bff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,123,255,0.4);
+            transition: transform 0.1s, background 0.2s;
+            border: 4px solid #fff;
+        }
+        .camera-btn:active { transform: scale(0.92); background: #0056b3; }
+        .camera-btn svg { width: 40px; height: 40px; fill: white; }
+        
+        #previewText { font-size: 13px; color: #666; margin-top: 5px; }
+
+        .btn-enviar { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; margin-top: 10px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+        .btn-enviar:active { background: #218838; }
+        .btn-enviar:disabled { background: #cccccc; box-shadow: none; }
+
         /* Estilos del Pop-up Modal */
         #modalExito { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); animation: popUp 0.3s ease-in-out; }
+        .modal-content { background: white; padding: 25px; border-radius: 14px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); animation: popUp 0.3s ease-in-out; }
         @keyframes popUp { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .modal-content h3 { color: #28a745; margin-top: 0; font-size: 22px; }
-        .modal-content p { color: #555; font-size: 15px; line-height: 1.4; }
-        .btn-cerrar { background: #007bff; margin-top: 15px; padding: 10px; width: 100%; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .modal-content h3 { color: #28a745; margin-top: 0; font-size: 20px; }
+        .modal-content p { color: #555; font-size: 14px; line-height: 1.4; }
+        .btn-cerrar { background: #007bff; margin-top: 15px; padding: 12px; width: 100%; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Control de Asistencia</h2>
-    <p>¡Hola! Registra tu momento con una foto</p>
+    <p style="font-size: 14px; color: #666;">Toca la cámara para tomar tu foto</p>
     
     <input type="text" id="nombreTrabajador" placeholder="Tu Nombre Completo" required>
     
-    <!-- CAMARA CON BLOQUEO DE GALERÍA -->
-    <input type="file" accept="image/*" capture="user" id="fotoInput" required>
+    <!-- BOTÓN CIRCULAR DE CÁMARA -->
+    <div class="camera-container">
+        <label for="fotoInput" class="camera-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m8 3a5 5 0 0 0-5 5a5 5 0 0 0 5 5a5 5 0 0 0 5-5a5 5 0 0 0-5-5m0 2a3 3 0 0 1 3 3a3 3 0 0 1-3 3a3 3 0 0 1-3-3a3 3 0 0 1 3-3Z"/>
+            </svg>
+        </label>
+        <input type="file" accept="image/*" capture="user" id="fotoInput" onchange="fotoTomada()">
+        <div id="previewText">📸 Ninguna foto tomada aún</div>
+    </div>
     
-    <button id="btnEnviar" onclick="registrarAsistencia()">Registrar Asistencia</button>
+    <button id="btnEnviar" class="btn-enviar" onclick="registrarAsistencia()" disabled>Registrar Asistencia</button>
     
-    <p id="mensaje" style="font-weight: bold; font-size: 14px;"></p>
+    <p id="mensaje" style="font-weight: bold; font-size: 14px; margin-top: 10px;"></p>
 </div>
 
-<!-- VENTANA POP-UP DE ÉXITO CON CONFETI -->
+<!-- POP-UP DINÁMICO -->
 <div id="modalExito">
     <div class="modal-content">
-        <h3>¡Asistencia Registrada!</h3>
-        <p id="textoModal">¡Excelente trabajo! Cada esfuerzo cuenta para alcanzar el éxito hoy. ¡Felicidades!</p>
+        <h3 id="tituloModal">¡Registro Exitoso!</h3>
+        <p id="textoModal">Procesando...</p>
         <button class="btn-cerrar" onclick="cerrarModal()">Aceptar</button>
     </div>
 </div>
 
 <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxxbPc23580CoVXyR12ld_zWL3lRq5jjgwk1P3fcfqwm0EdglM_nQy-NdgjOf7ChsVyGA/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzbuEfTGgMExjkYZipkeqo-mPkwMCe9MLaV3GKatq76aYb3o4bt3HIJLn5GWbI3LsoP/exec";
 
-    // Recordar el nombre en el celular automáticamente
     window.onload = function() {
         const nombreGuardado = localStorage.getItem("nombreTrabajador");
         if (nombreGuardado) {
             document.getElementById("nombreTrabajador").value = nombreGuardado;
         }
     };
+
+    function fotoTomada() {
+        const fileInput = document.getElementById("fotoInput");
+        const previewText = document.getElementById("previewText");
+        const btnEnviar = document.getElementById("btnEnviar");
+
+        if (fileInput.files.length > 0) {
+            previewText.style.color = "green";
+            previewText.innerText = "✅ ¡Foto lista para enviar!";
+            btnEnviar.disabled = false;
+        }
+    }
 
     function registrarAsistencia() {
         const nombre = document.getElementById("nombreTrabajador").value.trim();
@@ -73,60 +115,105 @@
             return;
         }
 
-        // Guardar nombre en el navegador para la próxima
         localStorage.setItem("nombreTrabajador", nombre);
 
         btnEnviar.disabled = true;
-        mensaje.style.color = "#333";
-        mensaje.innerText = "Procesando registro...";
+        mensaje.style.color = "#007bff";
+        mensaje.innerText = "⚡ Procesando y enviando...";
 
         const file = fileInput.files[0];
         const reader = new FileReader();
-
+        
         reader.onload = function(event) {
-            const base64String = event.target.result.split(',')[1];
-            
-            const datos = {
-                trabajador: nombre,
-                gps: "No requerido",
-                fotoBase64: base64String,
-                mimeType: file.type,
-                nombreArchivo: "asistencia_" + Date.now() + ".jpg"
-            };
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
 
-            fetch(URL_APPS_SCRIPT, {
-                method: "POST",
-                body: JSON.stringify(datos)
-            })
-            .then(response => response.text())
-            .then(resultado => {
-                mensaje.innerText = "";
-                btnEnviar.disabled = false;
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const base64String = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
                 
-                // Mostrar Pop-up y lanzar Confeti
-                document.getElementById("modalExito").style.display = "flex";
-                
-                // Disparar animación de confeti alegre
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
-            })
-            .catch(error => {
-                btnEnviar.disabled = false;
-                mensaje.style.color = "red";
-                mensaje.innerText = "Error al enviar. Intenta de nuevo.";
-                console.error(error);
-            });
+                const datos = {
+                    trabajador: nombre,
+                    gps: "No requerido",
+                    fotoBase64: base64String,
+                    mimeType: "image/jpeg",
+                    nombreArchivo: "asistencia_" + Date.now() + ".jpg"
+                };
+
+                enviarServidor(datos);
+            }
+            img.src = event.target.result;
         };
-
         reader.readAsDataURL(file);
+    }
+
+    function enviarServidor(datos) {
+        const mensaje = document.getElementById("mensaje");
+        const btnEnviar = document.getElementById("btnEnviar");
+
+        fetch(URL_APPS_SCRIPT, {
+            method: "POST",
+            body: JSON.stringify(datos)
+        })
+        .then(response => response.json())
+        .then(resultado => {
+            mensaje.innerText = "";
+            btnEnviar.disabled = false;
+
+            if (resultado.status === "error") {
+                alert(resultado.message);
+                return;
+            }
+
+            const tituloModal = document.getElementById("tituloModal");
+            const textoModal = document.getElementById("textoModal");
+            const tipo = resultado.tipo; // Ej: "Entrada (Mañana)" o "Salida (Mañana)"
+
+            // Validar si es Entrada o Salida para personalizar la experiencia
+            if (tipo.includes("Entrada")) {
+                tituloModal.style.color = "#28a745"; // Verde motivador
+                tituloModal.innerText = "🚀 ¡Excelente Inicio!";
+                textoModal.innerText = `¡Hola, ${datos.trabajador}! Tu [${tipo}] ha sido registrada. ¡A darlo todo hoy y mucho éxito en tus metas! 💪`;
+                
+                // Confeti energético
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+            } else {
+                tituloModal.style.color = "#007bff"; // Azul de agradecimiento
+                tituloModal.innerText = "👏 ¡Gran Trabajo Hoy!";
+                textoModal.innerText = `¡Muchas gracias por tu esfuerzo y dedicación, ${datos.trabajador}! Tu [${tipo}] quedó registrada. ¡Descansa y nos vemos pronto! ✨`;
+                
+                // Confeti más suave y elegante para la salida
+                confetti({ particleCount: 80, spread: 60, colors: ['#007bff', '#6c757d', '#ffffff'], origin: { y: 0.6 } });
+            }
+
+            document.getElementById("modalExito").style.display = "flex";
+        })
+        .catch(error => {
+            btnEnviar.disabled = false;
+            mensaje.style.color = "red";
+            mensaje.innerText = "Error de conexión. Intenta de nuevo.";
+            console.error(error);
+        });
     }
 
     function cerrarModal() {
         document.getElementById("modalExito").style.display = "none";
-        location.reload(); // Recarga limpia para el siguiente registro
+        location.reload();
     }
 </script>
 
