@@ -3,21 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Asistencia</title>
+    <title>Control de Asistencia</title>
+    <!-- Librería de Confeti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; text-align: center; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        input, button { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input, button { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
         button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
         button:active { background: #218838; }
-        #mensaje { margin-top: 15px; font-weight: bold; font-size: 15px; }
+        
+        /* Estilos del Pop-up Modal */
+        #modalExito { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.3); animation: popUp 0.3s ease-in-out; }
+        @keyframes popUp { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .modal-content h3 { color: #28a745; margin-top: 0; font-size: 22px; }
+        .modal-content p { color: #555; font-size: 15px; line-height: 1.4; }
+        .btn-cerrar { background: #007bff; margin-top: 15px; padding: 10px; width: 100%; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Control de Asistencia</h2>
-    <p>Ingresa tu nombre y tómate la foto del momento</p>
+    <p>¡Hola! Registra tu momento con una foto</p>
     
     <input type="text" id="nombreTrabajador" placeholder="Tu Nombre Completo" required>
     
@@ -26,19 +35,36 @@
     
     <button id="btnEnviar" onclick="registrarAsistencia()">Registrar Asistencia</button>
     
-    <p id="mensaje"></p>
+    <p id="mensaje" style="font-weight: bold; font-size: 14px;"></p>
+</div>
+
+<!-- VENTANA POP-UP DE ÉXITO CON CONFETI -->
+<div id="modalExito">
+    <div class="modal-content">
+        <h3>¡Asistencia Registrada!</h3>
+        <p id="textoModal">¡Excelente trabajo! Cada esfuerzo cuenta para alcanzar el éxito hoy. ¡Felicidades!</p>
+        <button class="btn-cerrar" onclick="cerrarModal()">Aceptar</button>
+    </div>
 </div>
 
 <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyg8jHvLstgiEH1CyLzcKqp2XA5CXRhiG51tWC2mgeSyUwj1raClQZBV9TgRS-irATwtg/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxxbPc23580CoVXyR12ld_zWL3lRq5jjgwk1P3fcfqwm0EdglM_nQy-NdgjOf7ChsVyGA/exec";
+
+    // Recordar el nombre en el celular automáticamente
+    window.onload = function() {
+        const nombreGuardado = localStorage.getItem("nombreTrabajador");
+        if (nombreGuardado) {
+            document.getElementById("nombreTrabajador").value = nombreGuardado;
+        }
+    };
 
     function registrarAsistencia() {
-        const nombre = document.getElementById("nombreTrabajador").value;
+        const nombre = document.getElementById("nombreTrabajador").value.trim();
         const fileInput = document.getElementById("fotoInput");
         const mensaje = document.getElementById("mensaje");
         const btnEnviar = document.getElementById("btnEnviar");
 
-        if (!nombre.trim()) {
+        if (!nombre) {
             alert("Por favor ingresa tu nombre.");
             return;
         }
@@ -47,9 +73,12 @@
             return;
         }
 
+        // Guardar nombre en el navegador para la próxima
+        localStorage.setItem("nombreTrabajador", nombre);
+
         btnEnviar.disabled = true;
         mensaje.style.color = "#333";
-        mensaje.innerText = "Enviando registro...";
+        mensaje.innerText = "Procesando registro...";
 
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -65,16 +94,24 @@
                 nombreArchivo: "asistencia_" + Date.now() + ".jpg"
             };
 
-            // Usamos text/plain para evitar bloqueos de seguridad del navegador (CORS)
             fetch(URL_APPS_SCRIPT, {
                 method: "POST",
                 body: JSON.stringify(datos)
             })
             .then(response => response.text())
             .then(resultado => {
-                mensaje.style.color = "green";
-                mensaje.innerText = "¡Asistencia registrada con éxito!";
-                setTimeout(() => { location.reload(); }, 3000);
+                mensaje.innerText = "";
+                btnEnviar.disabled = false;
+                
+                // Mostrar Pop-up y lanzar Confeti
+                document.getElementById("modalExito").style.display = "flex";
+                
+                // Disparar animación de confeti alegre
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
             })
             .catch(error => {
                 btnEnviar.disabled = false;
@@ -85,6 +122,11 @@
         };
 
         reader.readAsDataURL(file);
+    }
+
+    function cerrarModal() {
+        document.getElementById("modalExito").style.display = "none";
+        location.reload(); // Recarga limpia para el siguiente registro
     }
 </script>
 
