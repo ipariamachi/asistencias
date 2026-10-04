@@ -21,21 +21,22 @@
     
     <input type="text" id="nombreTrabajador" placeholder="Tu Nombre Completo" required>
     
-    <!-- CAMARA CON BLOQUEO DE GALERÍA (Obliga a tomar foto en vivo) -->
+    <!-- CAMARA CON BLOQUEO DE GALERÍA -->
     <input type="file" accept="image/*" capture="user" id="fotoInput" required>
     
-    <button onclick="registrarAsistencia()">Registrar Asistencia</button>
+    <button id="btnEnviar" onclick="registrarAsistencia()">Registrar Asistencia</button>
     
     <p id="mensaje"></p>
 </div>
 
 <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxnFAUGk7fE-szwiFw99ZPeRBFbyJpUPYhrthKBdYhEijTQNNpUR_EBEcZaLOHJQVUimA/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyg8jHvLstgiEH1CyLzcKqp2XA5CXRhiG51tWC2mgeSyUwj1raClQZBV9TgRS-irATwtg/exec";
 
     function registrarAsistencia() {
         const nombre = document.getElementById("nombreTrabajador").value;
         const fileInput = document.getElementById("fotoInput");
         const mensaje = document.getElementById("mensaje");
+        const btnEnviar = document.getElementById("btnEnviar");
 
         if (!nombre.trim()) {
             alert("Por favor ingresa tu nombre.");
@@ -46,6 +47,7 @@
             return;
         }
 
+        btnEnviar.disabled = true;
         mensaje.style.color = "#333";
         mensaje.innerText = "Enviando registro...";
 
@@ -57,24 +59,25 @@
             
             const datos = {
                 trabajador: nombre,
-                gps: "No requerido", // Ya no usa GPS
+                gps: "No requerido",
                 fotoBase64: base64String,
                 mimeType: file.type,
                 nombreArchivo: "asistencia_" + Date.now() + ".jpg"
             };
 
+            // Usamos text/plain para evitar bloqueos de seguridad del navegador (CORS)
             fetch(URL_APPS_SCRIPT, {
                 method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datos)
             })
-            .then(() => {
+            .then(response => response.text())
+            .then(resultado => {
                 mensaje.style.color = "green";
                 mensaje.innerText = "¡Asistencia registrada con éxito!";
                 setTimeout(() => { location.reload(); }, 3000);
             })
             .catch(error => {
+                btnEnviar.disabled = false;
                 mensaje.style.color = "red";
                 mensaje.innerText = "Error al enviar. Intenta de nuevo.";
                 console.error(error);
