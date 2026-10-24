@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - FullConta7</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0b132b; color: #fff; padding: 20px; }
+        .panel { background: #152244; padding: 30px; border-radius: 15px; max-width: 1000px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
+        h1 { color: #17F1D7; }
+        .control-group { margin: 20px 0; padding: 20px; background: #0b132b; border-radius: 10px; border: 1px solid #3059B6; }
+        select, input { padding: 10px; border-radius: 6px; background: #fff; color: #0b132b; font-weight: bold; margin-right: 10px; border: none; }
+        button { background: #3059B6; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #17F1D7; color: #0b132b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #3059B6; text-align: left; }
+        th { color: #17F1D7; }
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <h1>🏢 Dashboard FullConta7</h1>
+    <p>Panel exclusivo de Administración.</p>
+
+    <div class="control-group">
+        <h3>1. Gestión de Centros de Trabajo</h3>
+        <input type="text" id="nuevaSedeNombre" placeholder="Ej. OFICINA LIMA">
+        <button onclick="crearCentro()">➕ Crear Nuevo Centro</button>
+        <p id="msjAdmin" style="color: #ffb703; margin-top: 10px;"></p>
+    </div>
+
+    <div class="control-group">
+        <h3>2. Generar QRs Oficiales y Reportes</h3>
+        <select id="selectSedeAdmin"><option value="">Seleccione un Centro...</option></select>
+        <button onclick="generarQR()">🖨️ Imprimir Código QR</button>
+        <button onclick="descargarExcel()" style="background: #17F1D7; color: #0b132b;">📥 Descargar Excel</button>
+    </div>
+
+    <h3>Registros Recientes</h3>
+    <table>
+        <thead><tr><th>Fecha</th><th>Centro</th><th>Trabajador</th><th>Turno</th><th>Foto</th></tr></thead>
+        <tbody id="tablaRegistros"></tbody>
+    </table>
+</div>
+
+<script>
+    // ==========================================
+    // ⚙️ PEGA AQUÍ TUS DATOS DE SUPABASE
+    // ==========================================
+    const SUPABASE_URL = "https://fsnvqorgomxmcnuidjux.supabase.co/rest/v1/";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbnZxb3Jnb214bWNudWlkanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTQ3NDksImV4cCI6MjEwODQzMDc0OX0.OTk8mOzNqYYXu1A8fZqIjFEuy3SBSaps18_lae6f6XU";
+    // ==========================================
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function cargarSedes() {
+        const { data } = await supabase.from('sedes').select('*');
+        const select = document.getElementById("selectSedeAdmin");
+        select.innerHTML = '<option value="">Seleccione un Centro...</option>';
+        data.forEach(s => select.innerHTML += `<option value="${s.nombre}">${s.nombre}</option>`);
+        cargarRegistros();
+    }
+
+    async function cargarRegistros() {
+        const { data } = await supabase.from('asistencias').select('*').order('creado_en', { ascending: false }).limit(20);
+        const tbody = document.getElementById("tablaRegistros");
+        tbody.innerHTML = "";
+        data.forEach(r => {
+            const fecha = new Date(r.creado_en).toLocaleString('es-PE');
+            const link = r.foto_url ? `<a href="${r.foto_url}" target="_blank" style="color:#17F1D7;">Ver Foto</a>` : 'Sin foto';
+            tbody.innerHTML += `<tr><td>${fecha}</td><td>${r.sede}</td><td>${r.trabajador}</td><td>${r.tipo_marca}</td><td>${link}</td></tr>`;
+        });
+    }
+
+    async function crearCentro() {
+        const nombre = document.getElementById("nuevaSedeNombre").value.trim().toUpperCase();
+        if(!nombre) return;
+        await supabase.from('sedes').insert([{ nombre: nombre }]);
+        document.getElementById("nuevaSedeNombre").value = "";
+        document.getElementById("msjAdmin").innerText = "Centro creado con éxito.";
+        cargarSedes();
+    }
+
+    function generarQR() {
+        const sede = document.getElementById("selectSedeAdmin").value;
+        if(!sede) return alert("Seleccione un centro.");
+        
+        // Esta URL apuntará a tu archivo index.html
+        const urlBase = window.location.href.replace("admin.html", "index.html");
+        const linkFinal = `${urlBase}?sede=${encodeURIComponent(sede)}`;
+        const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(linkFinal)}`;
+        
+        const ventana = window.open("", "_blank");
+        ventana.document.write(`<div style="text-align:center; font-family:sans-serif;">
+            <h1>QR de Asistencia: ${sede}</h1>
+            <img src="${imgUrl}" style="border:4px solid #1E408A; padding: 10px;">
+            <p>Imprima esta hoja y péguela en el ingreso.</p>
+        </div>`);
+    }
+
+    async function descargarExcel() {
+        const sede = document.getElementById("selectSedeAdmin").value;
+        if(!sede) return alert("Seleccione un centro.");
+        const { data } = await supabase.from('asistencias').select('*').eq('sede', sede);
+        
+        let csv = "\uFEFFFecha,Sede,Trabajador,Turno,Link_Foto\n";
+        data.forEach(r => {
+            csv += `"${new Date(r.creado_en).toLocaleString('es-PE')}","${r.sede}","${r.trabajador}","${r.tipo_marca}","${r.foto_url}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Reporte_${sede}.csv`;
+        link.click();
+    }
+
+    window.onload = cargarSedes;
+</script>
+</body>
+</html>

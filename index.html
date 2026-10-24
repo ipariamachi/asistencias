@@ -5,31 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia FC7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #0b132b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        
-        /* UI Minimalista Trabajador */
-        .card-trabajador { background: #152244; padding: 30px 20px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
-        .sede-tag { background: rgba(23, 241, 215, 0.1); color: #17F1D7; padding: 6px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
-        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #3059B6; background: #0b132b; color: #fff; font-size: 16px; text-align: center; margin-bottom: 20px; font-weight: bold; outline: none; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b132b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #152244; padding: 30px 20px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
+        .sede-tag { background: rgba(23, 241, 215, 0.1); color: #17F1D7; padding: 8px 15px; border-radius: 20px; font-size: 15px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #3059B6; background: #0b132b; color: #fff; font-size: 16px; text-align: center; margin-bottom: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
         input[type="text"]:disabled { border-color: #555; color: #999; }
         
-        .video-box { width: 200px; height: 200px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 4px solid #17F1D7; background: #000; }
+        .video-box { width: 220px; height: 220px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 4px solid #17F1D7; background: #000; }
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         
-        .btn-enviar { background: #17F1D7; color: #0b132b; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-enviar:disabled { background: #444; color: #888; cursor: not-allowed; }
-        .btn-enviar:active { transform: scale(0.95); }
-
-        /* UI Dashboard Admin */
-        #vistaAdmin { display: none; padding: 20px; width: 100%; max-width: 1000px; }
-        .panel { background: #152244; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { padding: 10px; border-bottom: 1px solid #3059B6; text-align: left; }
-        th { color: #17F1D7; }
-        .btn-admin { background: #3059B6; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-enviar { background: #17F1D7; color: #0b132b; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .btn-enviar:disabled { background: #444; color: #888; }
         
         /* Modal Éxito */
         #modalExito { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:1000; }
@@ -38,10 +25,9 @@
 </head>
 <body>
 
-<!-- VISTA TRABAJADOR -->
-<div class="card-trabajador" id="vistaTrabajador">
-    <div class="sede-tag" id="etiquetaSede">📍 Cargando sede...</div>
-    <input type="text" id="nombreTrabajador" placeholder="Tus Apellidos y Nombres">
+<div class="card">
+    <div class="sede-tag" id="etiquetaSede">📍 Cargando...</div>
+    <input type="text" id="nombreTrabajador" placeholder="Apellidos y Nombres">
     
     <div class="video-box">
         <video id="videoStream" autoplay playsinline muted></video>
@@ -51,38 +37,17 @@
     <p id="msjEstado" style="margin-top: 15px; font-size: 14px; color: #17F1D7;"></p>
 </div>
 
-<!-- VISTA ADMIN -->
-<div id="vistaAdmin">
-    <div class="panel">
-        <h2 style="color: #17F1D7;">🏢 Panel Administrativo FC7</h2>
-        <p style="color: #9baec8; font-size: 13px; margin-bottom: 15px;">Las fotos se eliminan a los 2 meses. Los registros a los 4 meses.</p>
-        
-        <select id="selectSedeAdmin" style="padding: 10px; border-radius: 6px; margin-right: 10px; background: #0b132b; color: #fff; border: 1px solid #3059B6;">
-            <option value="">Selecciona un Centro de Trabajo</option>
-        </select>
-        <button class="btn-admin" onclick="descargarExcelPorSede()">📥 Descargar Excel de esta Sede</button>
-        <button class="btn-admin" onclick="generarQR()">🖨️ Generar QR de esta Sede</button>
-        
-        <div style="margin-top: 20px; border-top: 1px solid #3059B6; padding-top: 15px;">
-            <input type="text" id="nuevaSedeNombre" placeholder="Nombre Nuevo Centro" style="padding: 10px; border-radius: 6px; width: 200px; background: #0b132b; color: #fff; border: 1px solid #3059B6;">
-            <button class="btn-admin" style="background: #17F1D7; color: #0b132b;" onclick="crearNuevoCentro()">➕ Crear Centro (Máx 2 más)</button>
-            <p id="msjAdmin" style="color: #ffb703; font-size: 13px; margin-top: 5px;"></p>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL MENSAJE POSITIVO -->
 <div id="modalExito">
     <div class="modal-content">
         <h2 style="color: #17F1D7; margin-bottom: 10px;">¡Asistencia Registrada!</h2>
-        <p style="color: #fff; font-size: 15px; margin-bottom: 20px;">¡Excelente trabajo! Te deseamos un día lleno de éxitos y productividad. ¡Sigue así!</p>
+        <p style="color: #fff; font-size: 15px; margin-bottom: 20px;">Tu marcación se ha guardado correctamente. ¡Que tengas un excelente día!</p>
         <button class="btn-enviar" onclick="location.reload()">Aceptar</button>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // ⚙️ CONFIGURACIÓN: PEGA TUS CREDENCIALES AQUÍ
+    // ⚙️ PEGA TUS 3 CREDENCIALES AQUÍ
     // ==========================================
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqLxbWlXL4MYfJOE181YK1ll9d9XRX5RrB03Zr9YkNYXXwQYmh52HFs1qBD6VPUBNW/exec";
     const SUPABASE_URL = "https://fsnvqorgomxmcnuidjux.supabase.co/rest/v1/";
@@ -90,34 +55,24 @@
     // ==========================================
 
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let sedeActual = "";
     const params = new URLSearchParams(window.location.search);
-    
-    window.onload = async function() {
-        if(params.get("admin") === "true") {
-            document.getElementById("vistaTrabajador").style.display = "none";
-            document.getElementById("vistaAdmin").style.display = "block";
-            cargarSedesAdmin();
-            return;
-        }
+    const sedeActual = params.get("sede");
 
-        sedeActual = params.get("sede");
+    window.onload = async function() {
         if(!sedeActual) {
-            document.getElementById("etiquetaSede").innerText = "⚠️ Escanea el código QR oficial";
+            document.getElementById("etiquetaSede").innerText = "⚠️ Error: Escanea el QR oficial.";
             document.getElementById("btnEnviar").disabled = true;
             return;
         }
-        document.getElementById("etiquetaSede").innerText = "📍 " + sedeActual;
+        document.getElementById("etiquetaSede").innerText = "📍 Sede: " + sedeActual;
 
-        // Lógica: Solo campo nombre, se bloquea a la 3ra vez.
+        // Limitar a 3 registros de nombre
         const inputNombre = document.getElementById("nombreTrabajador");
-        const nombreGuardado = localStorage.getItem("worker_name");
         const conteo = parseInt(localStorage.getItem("mark_count") || "0");
-
-        if (nombreGuardado) inputNombre.value = nombreGuardado;
+        if (localStorage.getItem("worker_name")) inputNombre.value = localStorage.getItem("worker_name");
         if (conteo >= 3) inputNombre.disabled = true;
 
-        // Encender cámara
+        // Iniciar Cámara
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
             document.getElementById("videoStream").srcObject = stream;
@@ -126,119 +81,43 @@
         }
     };
 
-    // FLUJO DEL TRABAJADOR
     async function procesarAsistencia() {
         const nombre = document.getElementById("nombreTrabajador").value.trim().toUpperCase();
         if(!nombre) return alert("Escribe tu nombre.");
         
         document.getElementById("btnEnviar").disabled = true;
-        document.getElementById("msjEstado").innerText = "Tomando foto segura...";
+        document.getElementById("msjEstado").innerText = "Enviando registro...";
 
-        // 1. Capturar foto del video
         const video = document.getElementById("videoStream");
         const canvas = document.createElement("canvas");
         canvas.width = 400; canvas.height = 400;
         canvas.getContext("2d").drawImage(video, 0, 0, 400, 400);
         const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
 
-        // 2. Determinar turno simple por hora del dispositivo
-        const hora = new Date().getHours();
-        const turno = hora < 14 ? "MAÑANA" : "TARDE";
-
-        // 3. Subir foto a Google Drive (Apps Script)
-        document.getElementById("msjEstado").innerText = "Guardando archivo (Se eliminará en 2 meses)...";
+        const turno = new Date().getHours() < 14 ? "MAÑANA" : "TARDE";
         let fotoUrl = "";
+
+        // Subir a Drive
         try {
             const reqDrive = await fetch(APPS_SCRIPT_URL, {
                 method: "POST", body: JSON.stringify({ sede: sedeActual, trabajador: nombre, fotoBase64: base64 })
             });
             const resDrive = await reqDrive.json();
             if(resDrive.status === "success") fotoUrl = resDrive.url;
-        } catch(e) { console.log("Error subiendo foto al Drive", e); }
+        } catch(e) { console.log(e); }
 
-        // 4. Guardar datos en Supabase (Retención 4 meses)
-        document.getElementById("msjEstado").innerText = "Registrando en Base de Datos...";
+        // Guardar en Base de Datos Supabase
         const { error } = await supabase.from('asistencias').insert([
             { sede: sedeActual, trabajador: nombre, tipo_marca: turno, foto_url: fotoUrl }
         ]);
 
-        if (error) {
-            alert("Error conectando con el servidor.");
-            document.getElementById("btnEnviar").disabled = false;
-            return;
-        }
+        if (error) return alert("Error de conexión.");
 
-        // Bloqueo de 3 veces
-        let cuenta = parseInt(localStorage.getItem("mark_count") || "0") + 1;
-        localStorage.setItem("mark_count", cuenta);
+        // Guardar progreso en el celular
+        localStorage.setItem("mark_count", parseInt(localStorage.getItem("mark_count") || "0") + 1);
         localStorage.setItem("worker_name", nombre);
 
-        // Mensaje final positivo
-        document.getElementById("msjEstado").innerText = "";
         document.getElementById("modalExito").style.display = "flex";
-        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-    }
-
-    // FLUJO DEL ADMINISTRADOR
-    async function cargarSedesAdmin() {
-        const { data } = await supabase.from('sedes').select('*');
-        const select = document.getElementById("selectSedeAdmin");
-        select.innerHTML = '<option value="">Selecciona un Centro de Trabajo</option>';
-        data.forEach(s => {
-            select.innerHTML += `<option value="${s.nombre}">${s.nombre}</option>`;
-        });
-    }
-
-    async function crearNuevoCentro() {
-        const nombreNuevo = document.getElementById("nuevaSedeNombre").value.trim().toUpperCase();
-        if(!nombreNuevo) return;
-        
-        const { data: sedes } = await supabase.from('sedes').select('*');
-        // Límite: 4 iniciales + 2 nuevos = 6 máximo
-        if(sedes.length >= 6) {
-            document.getElementById("msjAdmin").innerText = "Límite alcanzado: No puedes crear más de 6 centros de trabajo en total.";
-            return;
-        }
-
-        await supabase.from('sedes').insert([{ nombre: nombreNuevo }]);
-        document.getElementById("msjAdmin").innerText = "Centro creado exitosamente.";
-        document.getElementById("nuevaSedeNombre").value = "";
-        cargarSedesAdmin();
-    }
-
-    async function descargarExcelPorSede() {
-        const sede = document.getElementById("selectSedeAdmin").value;
-        if(!sede) return alert("Selecciona un centro de trabajo.");
-
-        const { data } = await supabase.from('asistencias').select('*').eq('sede', sede).order('creado_en', { ascending: false });
-        if(data.length === 0) return alert("No hay registros para esta sede.");
-
-        let csv = "\uFEFFFecha y Hora,Sede,Trabajador,Turno,Link Foto\n";
-        data.forEach(r => {
-            const fechaLimpia = new Date(r.creado_en).toLocaleString('es-PE');
-            csv += `"${fechaLimpia}","${r.sede}","${r.trabajador}","${r.tipo_marca}","${r.foto_url || 'Sin foto'}"\n`;
-        });
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Reporte_${sede}_${new Date().toISOString().slice(0,10)}.csv`;
-        link.click();
-    }
-
-    function generarQR() {
-        const sede = document.getElementById("selectSedeAdmin").value;
-        if(!sede) return alert("Selecciona un centro de trabajo.");
-        const urlBase = window.location.origin + window.location.pathname;
-        const linkFinal = `${urlBase}?sede=${encodeURIComponent(sede)}`;
-        const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(linkFinal)}`;
-        
-        const ventana = window.open("", "_blank");
-        ventana.document.write(`<div style="text-align:center; font-family:sans-serif; margin-top:50px;">
-            <h2>QR Oficial: ${sede}</h2>
-            <img src="${imgUrl}" style="margin:20px 0; border:4px solid #1E408A; border-radius:10px;">
-            <p>Imprime esta página y pégala en el centro de trabajo.</p>
-        </div>`);
     }
 </script>
 </body>
