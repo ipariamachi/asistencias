@@ -5,89 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia FC7</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b132b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #152244; padding: 30px 20px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
-        .sede-tag { background: rgba(23, 241, 215, 0.1); color: #17F1D7; padding: 8px 15px; border-radius: 20px; font-size: 15px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
-        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #3059B6; background: #0b132b; color: #fff; font-size: 16px; text-align: center; margin-bottom: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
-        input[type="text"]:disabled { border-color: #555; color: #999; }
+        :root {
+            --fc7-navy: #1E408A;
+            --fc7-blue: #2970EC;
+            --fc7-green: #5E970C;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0d1b3a 0%, var(--fc7-navy) 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; }
         
-        .video-box { width: 220px; height: 220px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 4px solid #17F1D7; background: #000; }
+        .card { background: #ffffff; padding: 30px 20px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border-top: 6px solid var(--fc7-green); }
+        
+        .logo-box { margin-bottom: 15px; }
+        .logo-box svg { height: 70px; width: auto; }
+        
+        .sede-tag { background: rgba(30, 64, 138, 0.1); color: var(--fc7-navy); padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: 800; margin-bottom: 20px; display: inline-block; border: 1px solid var(--fc7-blue); }
+        
+        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #cbd5e1; background: #f8fafc; color: #1e293b; font-size: 16px; text-align: center; margin-bottom: 20px; font-weight: bold; outline: none; box-sizing: border-box; }
+        input[type="text"]:focus { border-color: var(--fc7-blue); background: #fff; }
+        input[type="text"]:disabled { background: #e2e8f0; color: #64748b; border-color: #cbd5e1; }
+        
+        /* Anillo verde de FullConta7 para la cámara */
+        .video-box { width: 220px; height: 220px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 5px solid var(--fc7-green); background: #000; box-shadow: 0 5px 20px rgba(94, 151, 12, 0.4); }
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         
-        .btn-enviar { background: #17F1D7; color: #0b132b; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-enviar:disabled { background: #444; color: #888; }
+        .btn-enviar { background: linear-gradient(135deg, var(--fc7-green), #487508); color: #fff; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(94, 151, 12, 0.3); transition: 0.1s; }
+        .btn-enviar:active { transform: scale(0.96); }
+        .btn-enviar:disabled { background: #cbd5e1; color: #64748b; box-shadow: none; }
+        
+        .alerta-error { background: #fee2e2; color: #dc2626; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; display: none; font-size: 14px; border: 1px solid #f87171; }
         
         /* Modal Éxito */
-        #modalExito { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:1000; }
-        .modal-content { background: #152244; padding: 30px; border-radius: 15px; text-align: center; border: 2px solid #17F1D7; width: 90%; max-width: 320px; }
+        #modalExito { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(13, 27, 58, 0.9); align-items:center; justify-content:center; z-index:1000; padding: 20px; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 20px; text-align: center; border-top: 6px solid var(--fc7-green); width: 100%; max-width: 340px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="sede-tag" id="etiquetaSede">📍 Cargando...</div>
-    <input type="text" id="nombreTrabajador" placeholder="Apellidos y Nombres">
+<svg style="display:none;">
+    <symbol id="logo-fullconta7" viewBox="0 0 300 220">
+        <text x="22" y="112" font-family="Georgia, serif" font-weight="bold" font-size="112" fill="#1E408A">F7</text>
+        <path d="M165 78 Q182 62 198 102 L278 14 Q235 78 202 128 Q182 95 165 78 Z" fill="#2970EC"/>
+        <path d="M22 158 Q85 128 142 155 Q199 128 262 158 L248 122 Q192 98 142 142 Q92 98 36 122 Z" fill="#5E970C"/>
+        <text x="24" y="205" font-family="Georgia, serif" font-size="33" fill="#1E408A">FullConta7</text>
+        <line x1="22" y1="214" x2="262" y2="214" stroke="#2970EC" stroke-width="4"/>
+    </symbol>
+</svg>
+
+<div class="card" id="tarjetaPrincipal">
+    <div class="logo-box"><svg><use href="#logo-fullconta7"></use></svg></div>
     
-    <div class="video-box">
+    <div id="cajaError" class="alerta-error"></div>
+    
+    <div class="sede-tag" id="etiquetaSede">📍 Validando sede...</div>
+    <input type="text" id="nombreTrabajador" placeholder="Apellidos y Nombres Completos">
+    
+    <div class="video-box" id="cajaVideo">
         <video id="videoStream" autoplay playsinline muted></video>
     </div>
     
-    <button class="btn-enviar" id="btnEnviar" onclick="procesarAsistencia()">Registrar Asistencia</button>
-    <p id="msjEstado" style="margin-top: 15px; font-size: 14px; color: #17F1D7;"></p>
+    <button class="btn-enviar" id="btnEnviar" onclick="procesarAsistencia()">✅ Registrar Asistencia</button>
+    <p id="msjEstado" style="margin-top: 15px; font-size: 14px; color: var(--fc7-blue); font-weight: bold;"></p>
 </div>
 
+<!-- Modal Positivo -->
 <div id="modalExito">
     <div class="modal-content">
-        <h2 style="color: #17F1D7; margin-bottom: 10px;">¡Asistencia Registrada!</h2>
-        <p style="color: #fff; font-size: 15px; margin-bottom: 20px;">Tu marcación se ha guardado correctamente. ¡Que tengas un excelente día!</p>
+        <h2 style="color: var(--fc7-navy); margin-bottom: 10px;">¡Registro Exitoso!</h2>
+        <p style="color: #475569; font-size: 15px; margin-bottom: 25px; line-height: 1.5;">¡Excelente trabajo! Tu asistencia en FullConta7 se ha guardado correctamente. ¡Te deseamos una jornada muy productiva!</p>
         <button class="btn-enviar" onclick="location.reload()">Aceptar</button>
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // ⚙️ PEGA TUS 3 CREDENCIALES AQUÍ
-    // ==========================================
+    // =========================================================
+    // ⚙️ PEGA TUS 3 CREDENCIALES AQUÍ (SIN ESPACIOS EXTRA)
+      // ==========================================
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqLxbWlXL4MYfJOE181YK1ll9d9XRX5RrB03Zr9YkNYXXwQYmh52HFs1qBD6VPUBNW/exec";
     const SUPABASE_URL = "https://fsnvqorgomxmcnuidjux.supabase.co/rest/v1/";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbnZxb3Jnb214bWNudWlkanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTQ3NDksImV4cCI6MjEwODQzMDc0OX0.OTk8mOzNqYYXu1A8fZqIjFEuy3SBSaps18_lae6f6XU";
     // ==========================================
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let supabase;
     const params = new URLSearchParams(window.location.search);
     const sedeActual = params.get("sede");
 
     window.onload = async function() {
-        if(!sedeActual) {
-            document.getElementById("etiquetaSede").innerText = "⚠️ Error: Escanea el QR oficial.";
+        if (SUPABASE_URL.includes("AQUI_") || APPS_SCRIPT_URL.includes("AQUI_")) {
+            mostrarError("❌ Error de sistema: Faltan configurar las credenciales en el código.");
             document.getElementById("btnEnviar").disabled = true;
             return;
         }
-        document.getElementById("etiquetaSede").innerText = "📍 Sede: " + sedeActual;
 
-        // Limitar a 3 registros de nombre
+        if(!sedeActual) {
+            mostrarError("⚠️ Acceso denegado. Estás intentando abrir la página directamente. Debes escanear el Código QR oficial pegado en tu centro de labores.");
+            document.getElementById("etiquetaSede").style.display = "none";
+            document.getElementById("btnEnviar").disabled = true;
+            document.getElementById("cajaVideo").style.display = "none";
+            return;
+        }
+        
+        document.getElementById("etiquetaSede").innerText = "📍 Sede: " + sedeActual;
+        supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Limitar a 3 veces el nombre
         const inputNombre = document.getElementById("nombreTrabajador");
         const conteo = parseInt(localStorage.getItem("mark_count") || "0");
         if (localStorage.getItem("worker_name")) inputNombre.value = localStorage.getItem("worker_name");
         if (conteo >= 3) inputNombre.disabled = true;
 
-        // Iniciar Cámara
+        // Encender cámara
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
             document.getElementById("videoStream").srcObject = stream;
         } catch (err) {
-            alert("Debes permitir la cámara para marcar asistencia.");
+            mostrarError("📸 FullConta7 requiere acceso a tu cámara para validar tu asistencia. Por favor, recarga la página y dale a 'Permitir'.");
+            document.getElementById("btnEnviar").disabled = true;
         }
     };
 
+    function mostrarError(msj) {
+        const alerta = document.getElementById("cajaError");
+        alerta.innerText = msj;
+        alerta.style.display = "block";
+    }
+
     async function procesarAsistencia() {
         const nombre = document.getElementById("nombreTrabajador").value.trim().toUpperCase();
-        if(!nombre) return alert("Escribe tu nombre.");
+        if(!nombre) return alert("Por favor, ingresa tus apellidos y nombres.");
         
         document.getElementById("btnEnviar").disabled = true;
-        document.getElementById("msjEstado").innerText = "Enviando registro...";
+        const msj = document.getElementById("msjEstado");
+        msj.innerText = "Tomando fotografía de seguridad...";
 
+        // 1. Capturar foto
         const video = document.getElementById("videoStream");
         const canvas = document.createElement("canvas");
         canvas.width = 400; canvas.height = 400;
@@ -97,27 +148,36 @@
         const turno = new Date().getHours() < 14 ? "MAÑANA" : "TARDE";
         let fotoUrl = "";
 
-        // Subir a Drive
+        // 2. Subir a Google Drive
+        msj.innerText = "Guardando archivo temporal...";
         try {
             const reqDrive = await fetch(APPS_SCRIPT_URL, {
                 method: "POST", body: JSON.stringify({ sede: sedeActual, trabajador: nombre, fotoBase64: base64 })
             });
             const resDrive = await reqDrive.json();
             if(resDrive.status === "success") fotoUrl = resDrive.url;
-        } catch(e) { console.log(e); }
+        } catch(e) { console.log("Drive falló, pero continuaremos con Supabase", e); }
 
-        // Guardar en Base de Datos Supabase
+        // 3. Guardar en Supabase
+        msj.innerText = "Registrando en Base de Datos Oficial...";
         const { error } = await supabase.from('asistencias').insert([
             { sede: sedeActual, trabajador: nombre, tipo_marca: turno, foto_url: fotoUrl }
         ]);
 
-        if (error) return alert("Error de conexión.");
+        if (error) {
+            mostrarError("❌ Error al guardar en base de datos: " + error.message);
+            document.getElementById("btnEnviar").disabled = false;
+            msj.innerText = "";
+            return;
+        }
 
-        // Guardar progreso en el celular
+        // 4. Éxito
         localStorage.setItem("mark_count", parseInt(localStorage.getItem("mark_count") || "0") + 1);
         localStorage.setItem("worker_name", nombre);
 
+        msj.innerText = "";
         document.getElementById("modalExito").style.display = "flex";
+        confetti({ particleCount: 150, spread: 80, colors: ['#1E408A', '#2970EC', '#5E970C'], origin: { y: 0.6 } });
     }
 </script>
 </body>

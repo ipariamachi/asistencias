@@ -3,109 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - FullConta7</title>
+    <title>FullConta7 | Dashboard Administrativo</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b132b; color: #fff; padding: 20px; }
-        .panel { background: #152244; padding: 30px; border-radius: 15px; max-width: 1000px; margin: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
-        h1 { color: #17F1D7; }
-        .control-group { margin: 20px 0; padding: 20px; background: #0b132b; border-radius: 10px; border: 1px solid #3059B6; }
-        select, input { padding: 10px; border-radius: 6px; background: #fff; color: #0b132b; font-weight: bold; margin-right: 10px; border: none; }
-        button { background: #3059B6; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #17F1D7; color: #0b132b; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #3059B6; text-align: left; }
-        th { color: #17F1D7; }
+        :root {
+            --fc7-navy: #1E408A;
+            --fc7-blue: #2970EC;
+            --fc7-green: #5E970C;
+            --bg-dark: #0d1b3a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0d1b3a 0%, var(--fc7-navy) 100%); color: #fff; min-height: 100vh; padding: 20px; }
+        
+        /* Cabecera y Logo */
+        .topbar { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; border-bottom: 3px solid var(--fc7-green); padding-bottom: 15px; }
+        .logo-svg { height: 60px; width: auto; background: #fff; padding: 5px 15px; border-radius: 10px; }
+        
+        .panel { background: #ffffff; color: #1e293b; padding: 30px; border-radius: 15px; max-width: 1100px; margin: auto; box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
+        h1 { color: var(--fc7-navy); margin-bottom: 5px; }
+        .subtitle { color: #64748b; margin-bottom: 25px; font-weight: bold; }
+        
+        .grid-paneles { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (max-width: 768px) { .grid-paneles { grid-template-columns: 1fr; } }
+        
+        .control-group { background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #cbd5e1; border-left: 5px solid var(--fc7-blue); }
+        .control-group h3 { color: var(--fc7-navy); margin-bottom: 15px; }
+        
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #cbd5e1; margin-bottom: 15px; font-size: 15px; outline: none; }
+        input:focus, select:focus { border-color: var(--fc7-blue); }
+        
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; width: 100%; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.97); }
+        .btn-blue { background: var(--fc7-blue); color: #fff; }
+        .btn-green { background: var(--fc7-green); color: #fff; margin-top: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: var(--fc7-navy); color: #fff; }
+        td a { color: var(--fc7-blue); font-weight: bold; text-decoration: none; }
+        
+        .alerta { background: #fee2e2; color: #dc2626; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: none; border-left: 5px solid #dc2626; }
     </style>
 </head>
 <body>
 
+<!-- LOGO SVG FULLCONTA7 -->
+<svg style="display:none;">
+    <symbol id="logo-fullconta7" viewBox="0 0 300 220">
+        <text x="22" y="112" font-family="Georgia, serif" font-weight="bold" font-size="112" fill="#1E408A">F7</text>
+        <path d="M165 78 Q182 62 198 102 L278 14 Q235 78 202 128 Q182 95 165 78 Z" fill="#2970EC"/>
+        <path d="M22 158 Q85 128 142 155 Q199 128 262 158 L248 122 Q192 98 142 142 Q92 98 36 122 Z" fill="#5E970C"/>
+        <text x="24" y="205" font-family="Georgia, serif" font-size="33" fill="#1E408A">FullConta7</text>
+        <line x1="22" y1="214" x2="262" y2="214" stroke="#2970EC" stroke-width="4"/>
+    </symbol>
+</svg>
+
+<div class="topbar">
+    <svg class="logo-svg"><use href="#logo-fullconta7"></use></svg>
+    <h2>Plataforma Corporativa</h2>
+</div>
+
 <div class="panel">
-    <h1>🏢 Dashboard FullConta7</h1>
-    <p>Panel exclusivo de Administración.</p>
+    <div id="cajaAlerta" class="alerta"></div>
+    
+    <h1>Dashboard Administrativo</h1>
+    <p class="subtitle">Gestión de sedes, reportes y generación de QRs.</p>
 
-    <div class="control-group">
-        <h3>1. Gestión de Centros de Trabajo</h3>
-        <input type="text" id="nuevaSedeNombre" placeholder="Ej. OFICINA LIMA">
-        <button onclick="crearCentro()">➕ Crear Nuevo Centro</button>
-        <p id="msjAdmin" style="color: #ffb703; margin-top: 10px;"></p>
+    <div class="grid-paneles">
+        <!-- Panel 1: Crear Sedes -->
+        <div class="control-group">
+            <h3>1. Crear Centro de Trabajo</h3>
+            <input type="text" id="nuevaSedeNombre" placeholder="Ej. OFICINA CENTRAL">
+            <button class="btn btn-blue" onclick="crearCentro()">➕ Guardar Centro</button>
+            <p id="msjAdmin" style="color: var(--fc7-green); margin-top: 10px; font-weight: bold;"></p>
+        </div>
+
+        <!-- Panel 2: Imprimir QR y Reportes -->
+        <div class="control-group">
+            <h3>2. Generar QR y Descargar Reportes</h3>
+            <select id="selectSedeAdmin"><option value="">Cargando sedes...</option></select>
+            <button class="btn btn-blue" onclick="generarQR()">🖨️ Imprimir Código QR</button>
+            <button class="btn btn-green" onclick="descargarExcel()">📥 Descargar Excel (CSV)</button>
+        </div>
     </div>
 
-    <div class="control-group">
-        <h3>2. Generar QRs Oficiales y Reportes</h3>
-        <select id="selectSedeAdmin"><option value="">Seleccione un Centro...</option></select>
-        <button onclick="generarQR()">🖨️ Imprimir Código QR</button>
-        <button onclick="descargarExcel()" style="background: #17F1D7; color: #0b132b;">📥 Descargar Excel</button>
+    <h3 style="color: var(--fc7-navy);">Últimos 20 Registros</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead><tr><th>Fecha / Hora</th><th>Sede</th><th>Trabajador</th><th>Turno</th><th>Foto Drive</th></tr></thead>
+            <tbody id="tablaRegistros"><tr><td colspan="5">Cargando datos...</td></tr></tbody>
+        </table>
     </div>
-
-    <h3>Registros Recientes</h3>
-    <table>
-        <thead><tr><th>Fecha</th><th>Centro</th><th>Trabajador</th><th>Turno</th><th>Foto</th></tr></thead>
-        <tbody id="tablaRegistros"></tbody>
-    </table>
 </div>
 
 <script>
-    // ==========================================
-    // ⚙️ PEGA AQUÍ TUS DATOS DE SUPABASE
-    // ==========================================
+    // =========================================================
+    // ⚙️ PEGA AQUÍ TUS DATOS DE SUPABASE (SIN ESPACIOS EXTRA)
+    // =========================================================
     const SUPABASE_URL = "https://fsnvqorgomxmcnuidjux.supabase.co/rest/v1/";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbnZxb3Jnb214bWNudWlkanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTQ3NDksImV4cCI6MjEwODQzMDc0OX0.OTk8mOzNqYYXu1A8fZqIjFEuy3SBSaps18_lae6f6XU";
-    // ==========================================
+    // =========================================================
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let supabase;
+
+    window.onload = function() {
+        // Autodiagnóstico de credenciales
+        if (SUPABASE_URL.includes("AQUI_TU") || SUPABASE_KEY.includes("AQUI_TU")) {
+            mostrarError("❌ Falta configurar SUPABASE_URL y SUPABASE_KEY en el código html.");
+            return;
+        }
+        
+        try {
+            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            cargarSedes();
+        } catch (error) {
+            mostrarError("❌ Error al conectar con Supabase. Revisa que las claves estén bien copiadas.");
+        }
+    };
+
+    function mostrarError(msj) {
+        const alerta = document.getElementById("cajaAlerta");
+        alerta.innerText = msj;
+        alerta.style.display = "block";
+    }
 
     async function cargarSedes() {
-        const { data } = await supabase.from('sedes').select('*');
+        const { data, error } = await supabase.from('sedes').select('*');
+        if (error) { mostrarError("❌ Error de permisos en Supabase (RLS): " + error.message); return; }
+        
         const select = document.getElementById("selectSedeAdmin");
-        select.innerHTML = '<option value="">Seleccione un Centro...</option>';
+        select.innerHTML = '<option value="">-- Seleccione una Sede --</option>';
         data.forEach(s => select.innerHTML += `<option value="${s.nombre}">${s.nombre}</option>`);
         cargarRegistros();
     }
 
     async function cargarRegistros() {
-        const { data } = await supabase.from('asistencias').select('*').order('creado_en', { ascending: false }).limit(20);
+        const { data, error } = await supabase.from('asistencias').select('*').order('creado_en', { ascending: false }).limit(20);
+        if (error) { mostrarError("❌ Error al cargar asistencias: " + error.message); return; }
+
         const tbody = document.getElementById("tablaRegistros");
         tbody.innerHTML = "";
+        if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay registros aún.</td></tr>'; return; }
+
         data.forEach(r => {
             const fecha = new Date(r.creado_en).toLocaleString('es-PE');
-            const link = r.foto_url ? `<a href="${r.foto_url}" target="_blank" style="color:#17F1D7;">Ver Foto</a>` : 'Sin foto';
-            tbody.innerHTML += `<tr><td>${fecha}</td><td>${r.sede}</td><td>${r.trabajador}</td><td>${r.tipo_marca}</td><td>${link}</td></tr>`;
+            const link = r.foto_url ? `<a href="${r.foto_url}" target="_blank">📷 Ver Foto</a>` : 'No subió';
+            tbody.innerHTML += `<tr><td>${fecha}</td><td>${r.sede}</td><td><b>${r.trabajador}</b></td><td>${r.tipo_marca}</td><td>${link}</td></tr>`;
         });
     }
 
     async function crearCentro() {
         const nombre = document.getElementById("nuevaSedeNombre").value.trim().toUpperCase();
-        if(!nombre) return;
-        await supabase.from('sedes').insert([{ nombre: nombre }]);
+        if(!nombre) return alert("Escriba un nombre para el centro.");
+        
+        const { error } = await supabase.from('sedes').insert([{ nombre: nombre }]);
+        if (error) { mostrarError("❌ No se pudo crear: " + error.message); return; }
+
         document.getElementById("nuevaSedeNombre").value = "";
-        document.getElementById("msjAdmin").innerText = "Centro creado con éxito.";
+        document.getElementById("msjAdmin").innerText = "✅ Centro creado correctamente.";
+        setTimeout(() => document.getElementById("msjAdmin").innerText = "", 3000);
         cargarSedes();
     }
 
     function generarQR() {
         const sede = document.getElementById("selectSedeAdmin").value;
-        if(!sede) return alert("Seleccione un centro.");
+        if(!sede) return alert("Seleccione un centro de trabajo primero.");
         
-        // Esta URL apuntará a tu archivo index.html
-        const urlBase = window.location.href.replace("admin.html", "index.html");
+        // Genera la URL correcta para el index.html
+        const urlBase = window.location.href.split('?')[0].replace("admin.html", "index.html");
         const linkFinal = `${urlBase}?sede=${encodeURIComponent(sede)}`;
-        const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(linkFinal)}`;
+        const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(linkFinal)}`;
         
         const ventana = window.open("", "_blank");
-        ventana.document.write(`<div style="text-align:center; font-family:sans-serif;">
-            <h1>QR de Asistencia: ${sede}</h1>
-            <img src="${imgUrl}" style="border:4px solid #1E408A; padding: 10px;">
-            <p>Imprima esta hoja y péguela en el ingreso.</p>
+        ventana.document.write(`<div style="text-align:center; font-family:sans-serif; margin-top: 50px;">
+            <h1 style="color: #1E408A;">Código QR Oficial - FullConta7</h1>
+            <h2 style="color: #5E970C;">Centro: ${sede}</h2>
+            <img src="${imgUrl}" style="border:5px solid #1E408A; padding: 15px; border-radius: 15px; margin: 30px 0;">
+            <p style="font-size: 18px;">Trabajador: Escanee este código con la cámara de su celular para registrar su asistencia.</p>
         </div>`);
     }
 
     async function descargarExcel() {
         const sede = document.getElementById("selectSedeAdmin").value;
-        if(!sede) return alert("Seleccione un centro.");
-        const { data } = await supabase.from('asistencias').select('*').eq('sede', sede);
+        if(!sede) return alert("Seleccione un centro para descargar su reporte.");
         
-        let csv = "\uFEFFFecha,Sede,Trabajador,Turno,Link_Foto\n";
+        const { data, error } = await supabase.from('asistencias').select('*').eq('sede', sede);
+        if (error) { mostrarError("❌ Error al descargar: " + error.message); return; }
+        
+        let csv = "\uFEFFFecha y Hora,Sede,Trabajador,Turno,Link de la Foto en Drive\n";
         data.forEach(r => {
             csv += `"${new Date(r.creado_en).toLocaleString('es-PE')}","${r.sede}","${r.trabajador}","${r.tipo_marca}","${r.foto_url}"\n`;
         });
@@ -116,8 +201,6 @@
         link.download = `Reporte_${sede}.csv`;
         link.click();
     }
-
-    window.onload = cargarSedes;
 </script>
 </body>
 </html>
