@@ -86,7 +86,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbnZxb3Jnb214bWNudWlkanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTQ3NDksImV4cCI6MjEwODQzMDc0OX0.OTk8mOzNqYYXu1A8fZqIjFEuy3SBSaps18_lae6f6XU";
     // ==========================================
 
-    let supabase;
+    let clienteSupabase; // <-- CORRECCIÓN
     const params = new URLSearchParams(window.location.search);
     const sedeActual = params.get("sede");
 
@@ -106,7 +106,7 @@
         }
         
         document.getElementById("etiquetaSede").innerText = "📍 Sede: " + sedeActual;
-        supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Limitar a 3 veces el nombre
         const inputNombre = document.getElementById("nombreTrabajador");
@@ -160,7 +160,7 @@
 
         // 3. Guardar en Supabase
         msj.innerText = "Registrando en Base de Datos Oficial...";
-        const { error } = await supabase.from('asistencias').insert([
+        const { error } = await clienteSupabase.from('asistencias').insert([
             { sede: sedeActual, trabajador: nombre, tipo_marca: turno, foto_url: fotoUrl }
         ]);
 
