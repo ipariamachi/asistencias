@@ -104,20 +104,19 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzbnZxb3Jnb214bWNudWlkanV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTQ3NDksImV4cCI6MjEwODQzMDc0OX0.OTk8mOzNqYYXu1A8fZqIjFEuy3SBSaps18_lae6f6XU";
     // =========================================================
 
-    let supabase;
+    let clienteSupabase; // <-- CORRECCIÓN: Nombre cambiado para evitar choque
 
     window.onload = function() {
-        // Autodiagnóstico de credenciales
         if (SUPABASE_URL.includes("AQUI_TU") || SUPABASE_KEY.includes("AQUI_TU")) {
-            mostrarError("❌ Falta configurar SUPABASE_URL y SUPABASE_KEY en el código html.");
+            mostrarError("❌ Falta configurar SUPABASE_URL y SUPABASE_KEY.");
             return;
         }
         
         try {
-            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             cargarSedes();
         } catch (error) {
-            mostrarError("❌ Error al conectar con Supabase. Revisa que las claves estén bien copiadas.");
+            mostrarError("❌ Error al conectar con Supabase: " + error.message);
         }
     };
 
@@ -128,8 +127,8 @@
     }
 
     async function cargarSedes() {
-        const { data, error } = await supabase.from('sedes').select('*');
-        if (error) { mostrarError("❌ Error de permisos en Supabase (RLS): " + error.message); return; }
+        const { data, error } = await clienteSupabase.from('sedes').select('*');
+        if (error) { mostrarError("❌ Error al cargar sedes: " + error.message); return; }
         
         const select = document.getElementById("selectSedeAdmin");
         select.innerHTML = '<option value="">-- Seleccione una Sede --</option>';
@@ -138,8 +137,8 @@
     }
 
     async function cargarRegistros() {
-        const { data, error } = await supabase.from('asistencias').select('*').order('creado_en', { ascending: false }).limit(20);
-        if (error) { mostrarError("❌ Error al cargar asistencias: " + error.message); return; }
+        const { data, error } = await clienteSupabase.from('asistencias').select('*').order('creado_en', { ascending: false }).limit(20);
+        if (error) { mostrarError("❌ Error al cargar registros: " + error.message); return; }
 
         const tbody = document.getElementById("tablaRegistros");
         tbody.innerHTML = "";
@@ -156,7 +155,7 @@
         const nombre = document.getElementById("nuevaSedeNombre").value.trim().toUpperCase();
         if(!nombre) return alert("Escriba un nombre para el centro.");
         
-        const { error } = await supabase.from('sedes').insert([{ nombre: nombre }]);
+        const { error } = await clienteSupabase.from('sedes').insert([{ nombre: nombre }]);
         if (error) { mostrarError("❌ No se pudo crear: " + error.message); return; }
 
         document.getElementById("nuevaSedeNombre").value = "";
@@ -169,7 +168,6 @@
         const sede = document.getElementById("selectSedeAdmin").value;
         if(!sede) return alert("Seleccione un centro de trabajo primero.");
         
-        // Genera la URL correcta para el index.html
         const urlBase = window.location.href.split('?')[0].replace("admin.html", "index.html");
         const linkFinal = `${urlBase}?sede=${encodeURIComponent(sede)}`;
         const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(linkFinal)}`;
@@ -187,7 +185,7 @@
         const sede = document.getElementById("selectSedeAdmin").value;
         if(!sede) return alert("Seleccione un centro para descargar su reporte.");
         
-        const { data, error } = await supabase.from('asistencias').select('*').eq('sede', sede);
+        const { data, error } = await clienteSupabase.from('asistencias').select('*').eq('sede', sede);
         if (error) { mostrarError("❌ Error al descargar: " + error.message); return; }
         
         let csv = "\uFEFFFecha y Hora,Sede,Trabajador,Turno,Link de la Foto en Drive\n";
