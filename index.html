@@ -3,718 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FullConta7 | Sistema de Control de Asistencia</title>
-    
-    <!-- FAVICON OFICIAL FULLCONTA7 (F7 + Check Azul + Libro Verde) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 160'%3E%3Crect width='200' height='160' rx='28' fill='%23ffffff'/%3E%3Ctext x='14' y='88' font-family='Georgia, serif' font-weight='bold' font-size='84' fill='%231E408A'%3EF7%3C/text%3E%3Cpath d='M118 62 Q132 52 142 78 L190 12 Q162 58 144 96 Q130 72 118 62 Z' fill='%232970EC' stroke='%232970EC' stroke-width='6' stroke-linejoin='round'/%3E%3Cpath d='M20 125 Q60 105 95 125 Q130 105 170 125 L162 98 Q125 82 95 112 Q65 82 28 98 Z' fill='%235E970C'/%3E%3Cpath d='M15 132 L80 132 Q95 148 110 132 L175 132' fill='none' stroke='%235E970C' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
-    
-    <!-- Librería de Confeti -->
+    <title>Asistencia FC7</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
     <style>
-        :root {
-            --fc7-navy: #1E408A;      /* Azul F7 principal */
-            --fc7-blue: #2970EC;      /* Azul del Check */
-            --fc7-green: #5E970C;     /* Verde del Libro Contable */
-            --fc7-green-dark: #487508;
-            --bg-dark: #0d1b3a;
-            --card-white: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --danger: #dc3545;
-            --warning: #f59e0b;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background: linear-gradient(135deg, #0d1b3a 0%, var(--fc7-navy) 55%, #15326d 100%); 
-            min-height: 100vh; 
-            color: var(--text-dark); 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0b132b; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        /* Barra Superior Corporativa */
-        .topbar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 20px; 
-            background: #ffffff; 
-            border-bottom: 4px solid var(--fc7-green);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .brand-header { display: flex; align-items: center; gap: 10px; }
-        .brand-header svg { height: 42px; width: auto; }
+        /* UI Minimalista Trabajador */
+        .card-trabajador { background: #152244; padding: 30px 20px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 5px solid #17F1D7; }
+        .sede-tag { background: rgba(23, 241, 215, 0.1); color: #17F1D7; padding: 6px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+        input[type="text"] { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #3059B6; background: #0b132b; color: #fff; font-size: 16px; text-align: center; margin-bottom: 20px; font-weight: bold; outline: none; }
+        input[type="text"]:disabled { border-color: #555; color: #999; }
         
-        .btn-mode { 
-            background: var(--fc7-navy); 
-            color: #ffffff; 
-            border: none; 
-            padding: 8px 15px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 13px; 
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .btn-mode:hover { background: var(--fc7-blue); }
-
-        /* Contenedor Principal */
-        .worker-container { display: flex; justify-content: center; align-items: center; padding: 20px; min-height: calc(100vh - 70px); }
+        .video-box { width: 200px; height: 200px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 4px solid #17F1D7; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         
-        .card { 
-            background: var(--card-white); 
-            border-top: 6px solid var(--fc7-green);
-            width: 100%; 
-            max-width: 410px; 
-            padding: 25px 22px; 
-            border-radius: 20px; 
-            box-shadow: 0 20px 45px rgba(0,0,0,0.45); 
-            text-align: center; 
-        }
+        .btn-enviar { background: #17F1D7; color: #0b132b; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-enviar:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .btn-enviar:active { transform: scale(0.95); }
 
-        .logo-box { margin-bottom: 10px; }
-        .logo-box svg { height: 80px; width: auto; }
+        /* UI Dashboard Admin */
+        #vistaAdmin { display: none; padding: 20px; width: 100%; max-width: 1000px; }
+        .panel { background: #152244; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #3059B6; text-align: left; }
+        th { color: #17F1D7; }
+        .btn-admin { background: #3059B6; color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 5px; }
         
-        .badge-sede { 
-            display: inline-block; 
-            background: rgba(30, 64, 138, 0.1); 
-            color: var(--fc7-navy); 
-            border: 1.5px solid var(--fc7-blue);
-            padding: 5px 16px; 
-            border-radius: 20px; 
-            font-size: 12.5px; 
-            font-weight: 800; 
-            margin-bottom: 10px; 
-        }
-        
-        .input-group { position: relative; margin: 12px 0; }
-        input[type="text"], input[type="password"], select { 
-            width: 100%; 
-            padding: 13px; 
-            background: #f8fafc;
-            color: var(--text-dark);
-            border: 2px solid #cbd5e1; 
-            border-radius: 10px; 
-            font-size: 15px; 
-            font-weight: bold; 
-            text-align: center; 
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--fc7-blue); background: #fff; }
-        input:disabled { background: #e2e8f0; color: #475569; border-color: #cbd5e1; }
-        
-        .btn-unlock { 
-            background: var(--warning); 
-            color: #fff; 
-            border: none; 
-            padding: 7px 12px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 8px; 
-            display: none; 
-        }
-
-        /* Visor de Cámara en Vivo (Con anillo Verde FullConta7) */
-        .video-box { 
-            position: relative; 
-            width: 220px; 
-            height: 220px; 
-            margin: 14px auto; 
-            border-radius: 50%; 
-            overflow: hidden; 
-            border: 5px solid var(--fc7-green); 
-            background: #000; 
-            box-shadow: 0 8px 25px rgba(94, 151, 12, 0.35); 
-        }
-        video, #fotoPreview { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        #fotoPreview { display: none; }
-
-        .btn-capturar { 
-            background: linear-gradient(135deg, var(--fc7-blue), var(--fc7-navy)); 
-            color: #ffffff; 
-            border: none; 
-            padding: 12px 24px; 
-            border-radius: 25px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-size: 14px; 
-            margin-bottom: 10px; 
-            box-shadow: 0 4px 12px rgba(41, 112, 236, 0.35);
-        }
-        .btn-capturar:active { transform: scale(0.95); }
-
-        .btn-enviar { 
-            background: linear-gradient(135deg, var(--fc7-green), var(--fc7-green-dark)); 
-            color: #ffffff; 
-            border: none; 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: 6px; 
-            box-shadow: 0 6px 18px rgba(94, 151, 12, 0.35);
-        }
-        .btn-enviar:disabled { background: #cbd5e1; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
-
-        /* BLOQUEO DE ORDENADOR (PC BLOCKER) */
-        #bloqueoPC { display: none; }
-        .qr-pc-box { 
-            background: #ffffff; 
-            padding: 14px; 
-            border-radius: 16px; 
-            display: inline-block; 
-            margin: 14px 0; 
-            border: 3px solid var(--fc7-blue);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        }
-        .qr-pc-box img { width: 180px; height: 180px; display: block; }
-
-        /* Dashboard Administrador */
-        #vistaAdmin { display: none; padding: 20px; max-width: 1240px; margin: auto; }
-        .dash-panel { 
-            background: #ffffff; 
-            border-top: 5px solid var(--fc7-navy);
-            border-radius: 16px; 
-            padding: 22px; 
-            box-shadow: 0 12px 35px rgba(0,0,0,0.35); 
-            margin-bottom: 22px; 
-        }
-        .dash-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; border-bottom: 2px solid #f1f5f9; padding-bottom: 14px; }
-        
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
-        .kpi-card { background: #f8fafc; padding: 16px; border-radius: 12px; border-left: 5px solid var(--fc7-green); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-        .kpi-card h4 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-card p { font-size: 26px; font-weight: 800; color: var(--fc7-navy); margin-top: 6px; }
-
-        .sedes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
-        .sede-item { border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; background: #f8fafc; }
-        .sede-item img { width: 125px; height: 125px; margin: 10px auto; display: block; border-radius: 8px; background: white; padding: 6px; border: 1px solid #cbd5e1; }
-        
-        .btn-sm { display: inline-block; padding: 8px 12px; font-size: 12px; font-weight: bold; border-radius: 7px; text-decoration: none; color: white; background: var(--fc7-green); margin: 3px; border: none; cursor: pointer; }
-        .btn-sm.secondary { background: var(--fc7-blue); }
-        .btn-sm.navy { background: var(--fc7-navy); }
-
-        .table-wrap { overflow-x: auto; max-height: 440px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 11px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; color: var(--text-dark); }
-        th { background: var(--fc7-navy); color: #ffffff; position: sticky; top: 0; font-weight: 700; }
-        td a { color: var(--fc7-blue); text-decoration: none; font-weight: bold; }
-        .alerta-roja { color: var(--danger); font-weight: bold; }
-
-        /* Modal General */
-        .modal-overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(13, 27, 58, 0.8); align-items: center; justify-content: center; padding: 15px; backdrop-filter: blur(4px); }
-        .modal-box { background: #ffffff; border-top: 6px solid var(--fc7-green); padding: 28px 22px; border-radius: 18px; max-width: 350px; width: 100%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
-        .modal-box h3 { margin-bottom: 10px; color: var(--fc7-navy); }
-        .modal-box p { font-size: 14px; color: var(--text-dark); margin-bottom: 20px; line-height: 1.5; }
+        /* Modal Éxito */
+        #modalExito { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:1000; }
+        .modal-content { background: #152244; padding: 30px; border-radius: 15px; text-align: center; border: 2px solid #17F1D7; width: 90%; max-width: 320px; }
     </style>
 </head>
 <body>
 
-<!-- DEFINICIÓN DEL LOGO OFICIAL FULLCONTA7 REUTILIZABLE -->
-<svg style="display:none;">
-    <symbol id="logo-fullconta7" viewBox="0 0 300 220">
-        <!-- Letras F7 en Azul Profundo -->
-        <text x="22" y="112" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="112" fill="#1E408A">F7</text>
-        <!-- Check Azul Brillante -->
-        <path d="M165 78 Q182 62 198 102 L278 14 Q235 78 202 128 Q182 95 165 78 Z" fill="#2970EC" stroke="#2970EC" stroke-width="6" stroke-linejoin="round"/>
-        <!-- Libro Contable Abierto en Verde -->
-        <path d="M22 158 Q85 128 142 155 Q199 128 262 158 L248 122 Q192 98 142 142 Q92 98 36 122 Z" fill="#5E970C"/>
-        <path d="M16 168 L118 168 Q142 190 166 168 L268 168" fill="none" stroke="#5E970C" stroke-width="10" stroke-linecap="round"/>
-        <!-- Texto FullConta7 y línea inferior -->
-        <text x="24" y="205" font-family="Georgia, 'Times New Roman', serif" font-size="33" fill="#1E408A" letter-spacing="0.5">FullConta7</text>
-        <line x1="22" y1="214" x2="262" y2="214" stroke="#2970EC" stroke-width="4"/>
-    </symbol>
-</svg>
-
-<!-- CABECERA CORPORATIVA FULLCONTA7 -->
-<div class="topbar">
-    <div class="brand-header">
-        <svg><use href="#logo-fullconta7"></use></svg>
-    </div>
-    <button class="btn-mode" onclick="alternarVista()" id="btnSwitch">🔐 Panel Admin</button>
-</div>
-
-<!-- ================= VISTA 1: MARCADOR DEL TRABAJADOR ================= -->
-<div class="worker-container" id="vistaTrabajador">
+<!-- VISTA TRABAJADOR -->
+<div class="card-trabajador" id="vistaTrabajador">
+    <div class="sede-tag" id="etiquetaSede">📍 Cargando sede...</div>
+    <input type="text" id="nombreTrabajador" placeholder="Tus Apellidos y Nombres">
     
-    <!-- TARJETA A: BLOQUEO ESTRICTO SI ES ORDENADOR / PC -->
-    <div class="card" id="bloqueoPC">
-        <div class="logo-box"><svg><use href="#logo-fullconta7"></use></svg></div>
-        <div class="badge-sede" id="etiquetaSedePC">📍 SEDE ACTIVA</div>
-        <h2 style="color: var(--danger); font-size: 19px; margin-bottom: 8px;">📵 Acceso Exclusivo en Teléfono Móvil</h2>
-        <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
-            Por políticas de seguridad de <b>FullConta7</b>, el registro de asistencia está deshabilitado en computadoras o laptops.
-        </p>
-        <div class="qr-pc-box">
-            <img id="qrRedireccionMovil" src="" alt="Escanear con celular">
-        </div>
-        <p style="font-size: 13px; color: var(--fc7-navy); font-weight: bold;">
-            📱 Conéctate escaneando este código QR con tu teléfono para tomar tu foto en vivo y marcar tu asistencia.
-        </p>
+    <div class="video-box">
+        <video id="videoStream" autoplay playsinline muted></video>
     </div>
-
-    <!-- TARJETA B: FORMULARIO MÓVIL (SOLO SE MUESTRA EN TELÉFONOS) -->
-    <div class="card" id="formularioMovil">
-        <div class="logo-box"><svg><use href="#logo-fullconta7"></use></svg></div>
-        <div><div class="badge-sede" id="etiquetaSede">📍 CENTRO: CARGANDO...</div></div>
-        <h2 style="color: var(--fc7-navy); font-size: 19px;">Control de Asistencia</h2>
-        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;">Fotografía en vivo obligatoria (Lunes a Viernes)</p>
-
-        <div class="input-group">
-            <input type="text" id="nombreTrabajador" placeholder="Apellidos y Nombres Completos">
-            <button type="button" class="btn-unlock" id="btnCambiarNombre" onclick="solicitarCambioNombre()">🔒 Solicitar cambio de nombre</button>
-        </div>
-
-        <!-- VISOR DE CÁMARA EN TIEMPO REAL -->
-        <div class="video-box">
-            <video id="videoStream" autoplay playsinline muted></video>
-            <img id="fotoPreview" alt="Vista previa">
-        </div>
-
-        <button type="button" class="btn-capturar" id="btnCapturar" onclick="capturarFotograma()">📸 Capturar Foto en Vivo</button>
-        <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviarAsistencia()" disabled>✅ Confirmar Asistencia</button>
-        <p id="estadoEnvio" style="font-size:13px; font-weight:bold; margin-top:12px; color:var(--fc7-blue);"></p>
-    </div>
+    
+    <button class="btn-enviar" id="btnEnviar" onclick="procesarAsistencia()">Registrar Asistencia</button>
+    <p id="msjEstado" style="margin-top: 15px; font-size: 14px; color: #17F1D7;"></p>
 </div>
 
-<!-- ================= VISTA 2: DASHBOARD ADMINISTRADOR ================= -->
+<!-- VISTA ADMIN -->
 <div id="vistaAdmin">
-    <!-- Login -->
-    <div class="card" id="boxLogin" style="margin: 35px auto;">
-        <div class="logo-box"><svg><use href="#logo-fullconta7"></use></svg></div>
-        <h3 style="color:var(--fc7-navy); margin-bottom:15px;">🔐 Administración FullConta7</h3>
-        <input type="text" id="adminUser" placeholder="Usuario Administrador" style="margin-bottom:10px;">
-        <input type="password" id="adminPass" placeholder="Contraseña" style="margin-bottom:15px;">
-        <button class="btn-enviar" onclick="iniciarSesionAdmin()">Ingresar al Dashboard</button>
-    </div>
-
-    <!-- Panel Principal -->
-    <div id="panelDashboard" style="display:none;">
-        <div class="dash-panel">
-            <div class="dash-header">
-                <div>
-                    <h2 style="color:var(--fc7-navy);">📊 Monitor de Asistencias FullConta7</h2>
-                    <small id="infoAdminActivo" style="color:var(--text-muted); font-weight:bold;"></small>
-                </div>
-                <div>
-                    <button class="btn-sm navy" id="btnToggleFinde" onclick="cambiarPermisoFinde()">🔓 Fin de Semana: Cargando...</button>
-                    <button class="btn-sm" onclick="descargarExcelCSV()">📥 Descargar Excel (CSV)</button>
-                    <button class="btn-sm secondary" onclick="cargarDatosDashboard()">🔄 Actualizar En Vivo</button>
-                </div>
-            </div>
-
-            <div class="kpi-grid">
-                <div class="kpi-card"><h4>Registros Totales</h4><p id="kpiTotal">0</p></div>
-                <div class="kpi-card"><h4>Turnos Completados</h4><p id="kpiCompletos">0</p></div>
-                <div class="kpi-card" style="border-left-color: var(--fc7-blue);"><h4>En Turno Ahora</h4><p id="kpiEnCurso">0</p></div>
-                <div class="kpi-card" style="border-left-color: var(--danger);"><h4>Alertas de Nombre</h4><p id="kpiAlertas" style="color:var(--danger);">0</p></div>
-            </div>
-
-            <!-- Filtros -->
-            <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                <select id="filtroSede" onchange="filtrarTabla()" style="max-width:250px;">
-                    <option value="TODAS">📍 Todos los Centros de Labores</option>
-                </select>
-                <input type="text" id="filtroFecha" placeholder="Filtrar Fecha (YYYY-MM-DD)" oninput="filtrarTabla()" style="max-width:240px;">
-            </div>
-
-            <!-- Tabla en Vivo -->
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th><th>Centro Labores</th><th>Trabajador</th><th>Turno</th>
-                            <th>Ingreso</th><th>Salida</th><th>Horas</th><th>Fotos Drive</th><th>Teléfono / ID</th><th>Política</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaAsistencias"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Gestión de Centros de Labores, Carpetas Drive y Códigos QR -->
-        <div class="dash-panel">
-            <div class="dash-header">
-                <h3 style="color:var(--fc7-navy);">🏢 Centros de Labores, QRs Oficiales y Carpetas Drive</h3>
-                <div style="display:flex; gap:8px;">
-                    <input type="text" id="nuevaSedeInput" placeholder="Ej: LABOR_G" style="width:170px; padding:8px;">
-                    <button class="btn-sm" onclick="agregarSede()">➕ Crear Centro</button>
-                </div>
-            </div>
-            <div class="sedes-grid" id="contenedorSedes"></div>
-        </div>
-
-        <!-- Gestión de Sub-Administrador -->
-        <div class="dash-panel" id="panelSubAdmin" style="display:none;">
-            <h3 style="color:var(--fc7-navy); margin-bottom:12px;">👤 Crear Sub-Administrador (Máx. 1 permitido)</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <input type="text" id="subUser" placeholder="Usuario Sub-Admin" style="max-width:220px;">
-                <input type="password" id="subPass" placeholder="Contraseña" style="max-width:220px;">
-                <button class="btn-sm navy" onclick="registrarSubAdmin()">Crear Sub-Administrador</button>
-            </div>
+    <div class="panel">
+        <h2 style="color: #17F1D7;">🏢 Panel Administrativo FC7</h2>
+        <p style="color: #9baec8; font-size: 13px; margin-bottom: 15px;">Las fotos se eliminan a los 2 meses. Los registros a los 4 meses.</p>
+        
+        <select id="selectSedeAdmin" style="padding: 10px; border-radius: 6px; margin-right: 10px; background: #0b132b; color: #fff; border: 1px solid #3059B6;">
+            <option value="">Selecciona un Centro de Trabajo</option>
+        </select>
+        <button class="btn-admin" onclick="descargarExcelPorSede()">📥 Descargar Excel de esta Sede</button>
+        <button class="btn-admin" onclick="generarQR()">🖨️ Generar QR de esta Sede</button>
+        
+        <div style="margin-top: 20px; border-top: 1px solid #3059B6; padding-top: 15px;">
+            <input type="text" id="nuevaSedeNombre" placeholder="Nombre Nuevo Centro" style="padding: 10px; border-radius: 6px; width: 200px; background: #0b132b; color: #fff; border: 1px solid #3059B6;">
+            <button class="btn-admin" style="background: #17F1D7; color: #0b132b;" onclick="crearNuevoCentro()">➕ Crear Centro (Máx 2 más)</button>
+            <p id="msjAdmin" style="color: #ffb703; font-size: 13px; margin-top: 5px;"></p>
         </div>
     </div>
 </div>
 
-<!-- MODAL DE CONFIRMACIÓN Y AVISOS -->
-<div class="modal-overlay" id="modalGeneral">
-    <div class="modal-box">
-        <h3 id="modalTitulo">Aviso</h3>
-        <p id="modalMensaje"></p>
-        <button class="btn-enviar" onclick="cerrarModal()">Entendido</button>
+<!-- MODAL MENSAJE POSITIVO -->
+<div id="modalExito">
+    <div class="modal-content">
+        <h2 style="color: #17F1D7; margin-bottom: 10px;">¡Asistencia Registrada!</h2>
+        <p style="color: #fff; font-size: 15px; margin-bottom: 20px;">¡Excelente trabajo! Te deseamos un día lleno de éxitos y productividad. ¡Sigue así!</p>
+        <button class="btn-enviar" onclick="location.reload()">Aceptar</button>
     </div>
 </div>
 
 <script>
-    const URL_APPS_SCRIPT = "AQUI_PEGAS_TU_URL_DE_APPS_SCRIPT";
+    // ==========================================
+    // ⚙️ CONFIGURACIÓN: PEGA TUS CREDENCIALES AQUÍ
+    // ==========================================
+    const APPS_SCRIPT_URL = "AQUI_TU_URL_DE_APPS_SCRIPT";
+    const SUPABASE_URL = "AQUI_TU_PROJECT_URL_DE_SUPABASE";
+    const SUPABASE_KEY = "AQUI_TU_ANON_KEY_DE_SUPABASE";
+    // ==========================================
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let sedeActual = "";
+    const params = new URLSearchParams(window.location.search);
     
-    let sedeActiva = "LABOR_A";
-    let fotoBase64Uniforme = "";
-    let camaraTomada = false;
-    let cambioNombreForzado = false;
-    let datosGlobalesAsist = [];
-
-    // DETECTOR ESTRICTO DE TELÉFONO MÓVIL VS ORDENADOR (PC)
-    function esDispositivoMovilReal() {
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const regexMovil = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-        const tienePantallaTactil = (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
-        const esPlataformaPC = /Win32|Win64|MacIntel|Linux x86_64/i.test(navigator.platform) && !tienePantallaTactil;
-        
-        return regexMovil && !esPlataformaPC;
-    }
-
-    window.onload = function() {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("sede")) {
-            sedeActiva = params.get("sede").toUpperCase();
-        }
-        const textoSede = "📍 CENTRO: " + sedeActiva.replace("_", " ");
-        document.getElementById("etiquetaSede").innerText = textoSede;
-        document.getElementById("etiquetaSedePC").innerText = textoSede;
-
-        // SI ES PC: Bloquear cámara y exigir conexión por teléfono mediante QR
-        if (!esDispositivoMovilReal()) {
-            document.getElementById("formularioMovil").style.display = "none";
-            document.getElementById("bloqueoPC").style.display = "block";
-            const urlActual = window.location.href;
-            document.getElementById("qrRedireccionMovil").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(urlActual)}`;
+    window.onload = async function() {
+        if(params.get("admin") === "true") {
+            document.getElementById("vistaTrabajador").style.display = "none";
+            document.getElementById("vistaAdmin").style.display = "block";
+            cargarSedesAdmin();
             return;
         }
 
-        // SI ES MÓVIL: Inicializar huella y control de 3ra marcación
-        if (!localStorage.getItem("device_uid")) {
-            localStorage.setItem("device_uid", "TEL-" + Math.random().toString(36).substring(2, 10).toUpperCase());
+        sedeActual = params.get("sede");
+        if(!sedeActual) {
+            document.getElementById("etiquetaSede").innerText = "⚠️ Escanea el código QR oficial";
+            document.getElementById("btnEnviar").disabled = true;
+            return;
         }
+        document.getElementById("etiquetaSede").innerText = "📍 " + sedeActual;
 
-        const nombreGuardado = localStorage.getItem("worker_name");
-        const conteoMarcas = parseInt(localStorage.getItem("mark_count") || "0");
+        // Lógica: Solo campo nombre, se bloquea a la 3ra vez.
         const inputNombre = document.getElementById("nombreTrabajador");
+        const nombreGuardado = localStorage.getItem("worker_name");
+        const conteo = parseInt(localStorage.getItem("mark_count") || "0");
 
-        if (nombreGuardado) {
-            inputNombre.value = nombreGuardado;
-            if (conteoMarcas >= 3) {
-                inputNombre.disabled = true;
-                document.getElementById("btnCambiarNombre").style.display = "inline-block";
-            }
+        if (nombreGuardado) inputNombre.value = nombreGuardado;
+        if (conteo >= 3) inputNombre.disabled = true;
+
+        // Encender cámara
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            document.getElementById("videoStream").srcObject = stream;
+        } catch (err) {
+            alert("Debes permitir la cámara para marcar asistencia.");
         }
-
-        iniciarCamaraEnVivo();
     };
 
-    function iniciarCamaraEnVivo() {
+    // FLUJO DEL TRABAJADOR
+    async function procesarAsistencia() {
+        const nombre = document.getElementById("nombreTrabajador").value.trim().toUpperCase();
+        if(!nombre) return alert("Escribe tu nombre.");
+        
+        document.getElementById("btnEnviar").disabled = true;
+        document.getElementById("msjEstado").innerText = "Tomando foto segura...";
+
+        // 1. Capturar foto del video
         const video = document.getElementById("videoStream");
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 600, height: 600 }, audio: false })
-            .then(stream => { video.srcObject = stream; })
-            .catch(err => {
-                mostrarModal("⚠️ Cámara Requerida", "Por políticas de FullConta7, debes permitir el acceso a tu cámara en vivo para registrar asistencia.");
+        const canvas = document.createElement("canvas");
+        canvas.width = 400; canvas.height = 400;
+        canvas.getContext("2d").drawImage(video, 0, 0, 400, 400);
+        const base64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+
+        // 2. Determinar turno simple por hora del dispositivo
+        const hora = new Date().getHours();
+        const turno = hora < 14 ? "MAÑANA" : "TARDE";
+
+        // 3. Subir foto a Google Drive (Apps Script)
+        document.getElementById("msjEstado").innerText = "Guardando archivo (Se eliminará en 2 meses)...";
+        let fotoUrl = "";
+        try {
+            const reqDrive = await fetch(APPS_SCRIPT_URL, {
+                method: "POST", body: JSON.stringify({ sede: sedeActual, trabajador: nombre, fotoBase64: base64 })
             });
-    }
+            const resDrive = await reqDrive.json();
+            if(resDrive.status === "success") fotoUrl = resDrive.url;
+        } catch(e) { console.log("Error subiendo foto al Drive", e); }
 
-    function capturarFotograma() {
-        const video = document.getElementById("videoStream");
-        const preview = document.getElementById("fotoPreview");
-        const btnCapturar = document.getElementById("btnCapturar");
+        // 4. Guardar datos en Supabase (Retención 4 meses)
+        document.getElementById("msjEstado").innerText = "Registrando en Base de Datos...";
+        const { error } = await supabase.from('asistencias').insert([
+            { sede: sedeActual, trabajador: nombre, tipo_marca: turno, foto_url: fotoUrl }
+        ]);
 
-        if (!camaraTomada) {
-            const canvas = document.createElement("canvas");
-            canvas.width = 600;
-            canvas.height = 600;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(video, 0, 0, 600, 600);
-
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
-            fotoBase64Uniforme = dataUrl.split(",")[1];
-
-            preview.src = dataUrl;
-            video.style.display = "none";
-            preview.style.display = "block";
-            btnCapturar.innerText = "🔄 Tomar otra foto";
+        if (error) {
+            alert("Error conectando con el servidor.");
             document.getElementById("btnEnviar").disabled = false;
-            camaraTomada = true;
-        } else {
-            preview.style.display = "none";
-            video.style.display = "block";
-            btnCapturar.innerText = "📸 Capturar Foto en Vivo";
-            document.getElementById("btnEnviar").disabled = true;
-            camaraTomada = false;
-        }
-    }
-
-    function solicitarCambioNombre() {
-        const confirmar = confirm(
-            "⚠️ ADVERTENCIA DE POLÍTICAS FULLCONTA7:\n\n" +
-            "Tu nombre quedó registrado en este teléfono tras 3 marcaciones. Cambiar el nombre del trabajador puede incumplir las políticas de la empresa y este cambio será REPORTADO inmediatamente a la Administración.\n\n" +
-            "¿Deseas desbloquear y reportar el cambio?"
-        );
-        if (confirmar) {
-            cambioNombreForzado = true;
-            const inputNombre = document.getElementById("nombreTrabajador");
-            inputNombre.disabled = false;
-            inputNombre.focus();
-            document.getElementById("btnCambiarNombre").style.display = "none";
-        }
-    }
-
-    function enviarAsistencia() {
-        const nombreActual = document.getElementById("nombreTrabajador").value.trim().toUpperCase();
-        if (!nombreActual) {
-            mostrarModal("⚠️ Nombre Requerido", "Ingresa tus apellidos y nombres completos.");
             return;
         }
 
-        const nombrePrevio = localStorage.getItem("worker_name") || "";
-        const huboCambioReportable = cambioNombreForzado && (nombrePrevio !== "" && nombrePrevio !== nombreActual);
+        // Bloqueo de 3 veces
+        let cuenta = parseInt(localStorage.getItem("mark_count") || "0") + 1;
+        localStorage.setItem("mark_count", cuenta);
+        localStorage.setItem("worker_name", nombre);
 
-        document.getElementById("btnEnviar").disabled = true;
-        document.getElementById("estadoEnvio").innerText = "⚡ Sincronizando con FullConta7...";
-
-        const payload = {
-            accion: "MARCAR",
-            sede: sedeActiva,
-            trabajador: nombreActual,
-            fotoBase64: fotoBase64Uniforme,
-            deviceId: localStorage.getItem("device_uid"),
-            modelo: detectarModeloTelefono(),
-            cambioNombreDetectado: huboCambioReportable,
-            nombreAnterior: nombrePrevio
-        };
-
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify(payload) })
-            .then(r => r.json())
-            .then(res => {
-                document.getElementById("estadoEnvio").innerText = "";
-                if (res.status === "error") {
-                    mostrarModal("⚠️ Aviso FullConta7", res.message);
-                    document.getElementById("btnEnviar").disabled = false;
-                    return;
-                }
-
-                let cuenta = parseInt(localStorage.getItem("mark_count") || "0") + 1;
-                localStorage.setItem("mark_count", cuenta);
-                localStorage.setItem("worker_name", nombreActual);
-
-                if (res.tipoAccion === "INGRESO") {
-                    confetti({ particleCount: 110, spread: 75, colors: ['#5E970C', '#2970EC', '#1E408A'], origin: { y: 0.6 } });
-                    mostrarModal("🚀 ¡Ingreso Registrado!", `Bienvenido(a) a FullConta7 [${res.sede}]. Turno ${res.turno} iniciado a las ${res.hora}. ¡Excelente jornada!`);
-                } else {
-                    confetti({ particleCount: 85, spread: 60, colors: ['#2970EC', '#5E970C'], origin: { y: 0.6 } });
-                    mostrarModal("👏 ¡Salida Registrada!", `Gracias por tu dedicación en FullConta7 [${res.sede}]. Cerraste el turno ${res.turno} con ${res.horasTrabajadas} hrs trabajadas.`);
-                }
-            })
-            .catch(err => {
-                document.getElementById("estadoEnvio").innerText = "";
-                document.getElementById("btnEnviar").disabled = false;
-                mostrarModal("❌ Error de Conexión", "Verifica tu conexión a internet e intenta nuevamente.");
-            });
+        // Mensaje final positivo
+        document.getElementById("msjEstado").innerText = "";
+        document.getElementById("modalExito").style.display = "flex";
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
     }
 
-    function detectarModeloTelefono() {
-        const ua = navigator.userAgent;
-        const match = ua.match(/\(([^)]+)\)/);
-        return match ? match[1].split(";").slice(0, 2).join(" ") : "Móvil Corporativo";
+    // FLUJO DEL ADMINISTRADOR
+    async function cargarSedesAdmin() {
+        const { data } = await supabase.from('sedes').select('*');
+        const select = document.getElementById("selectSedeAdmin");
+        select.innerHTML = '<option value="">Selecciona un Centro de Trabajo</option>';
+        data.forEach(s => {
+            select.innerHTML += `<option value="${s.nombre}">${s.nombre}</option>`;
+        });
     }
 
-    // ================= FUNCIONES DEL DASHBOARD =================
-    function alternarVista() {
-        const vTrab = document.getElementById("vistaTrabajador");
-        const vAdmin = document.getElementById("vistaAdmin");
-        const btn = document.getElementById("btnSwitch");
-        if (vAdmin.style.display === "none" || vAdmin.style.display === "") {
-            vTrab.style.display = "none";
-            vAdmin.style.display = "block";
-            btn.innerText = "⬅️ Vista Marcación";
-        } else {
-            vAdmin.style.display = "none";
-            vTrab.style.display = "flex";
-            btn.innerText = "🔐 Panel Admin";
+    async function crearNuevoCentro() {
+        const nombreNuevo = document.getElementById("nuevaSedeNombre").value.trim().toUpperCase();
+        if(!nombreNuevo) return;
+        
+        const { data: sedes } = await supabase.from('sedes').select('*');
+        // Límite: 4 iniciales + 2 nuevos = 6 máximo
+        if(sedes.length >= 6) {
+            document.getElementById("msjAdmin").innerText = "Límite alcanzado: No puedes crear más de 6 centros de trabajo en total.";
+            return;
         }
+
+        await supabase.from('sedes').insert([{ nombre: nombreNuevo }]);
+        document.getElementById("msjAdmin").innerText = "Centro creado exitosamente.";
+        document.getElementById("nuevaSedeNombre").value = "";
+        cargarSedesAdmin();
     }
 
-    function iniciarSesionAdmin() {
-        const u = document.getElementById("adminUser").value.trim();
-        const p = document.getElementById("adminPass").value.trim();
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "LOGIN", usuario: u, password: p }) })
-            .then(r => r.json())
-            .then(res => {
-                if (res.status === "success") {
-                    document.getElementById("boxLogin").style.display = "none";
-                    document.getElementById("panelDashboard").style.display = "block";
-                    document.getElementById("infoAdminActivo").innerText = `Sesión activa: ${res.usuario} (${res.rol})`;
-                    if (res.rol === "SUPERADMIN") {
-                        document.getElementById("panelSubAdmin").style.display = "block";
-                    }
-                    actualizarBotonFinde(res.permitirFinde);
-                    cargarDatosDashboard();
-                } else {
-                    mostrarModal("❌ Acceso Denegado", res.message);
-                }
-            });
-    }
+    async function descargarExcelPorSede() {
+        const sede = document.getElementById("selectSedeAdmin").value;
+        if(!sede) return alert("Selecciona un centro de trabajo.");
 
-    function actualizarBotonFinde(estado) {
-        const btn = document.getElementById("btnToggleFinde");
-        if (estado === "SI") {
-            btn.style.background = "#f59e0b";
-            btn.innerText = "🔓 Sáb/Dom: Permitido (Modo Prueba)";
-        } else {
-            btn.style.background = "#dc3545";
-            btn.innerText = "🔒 Sáb/Dom: Bloqueado (Modo Estricto)";
-        }
-    }
+        const { data } = await supabase.from('asistencias').select('*').eq('sede', sede).order('creado_en', { ascending: false });
+        if(data.length === 0) return alert("No hay registros para esta sede.");
 
-    function cambiarPermisoFinde() {
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "TOGGLE_FINDE" }) })
-            .then(r => r.json())
-            .then(res => {
-                if (res.status === "success") {
-                    actualizarBotonFinde(res.nuevoEstado);
-                }
-            });
-    }
-
-    function cargarDatosDashboard() {
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "DASHBOARD_DATA" }) })
-            .then(r => r.json())
-            .then(res => {
-                datosGlobalesAsist = res.asistencias || [];
-                actualizarBotonFinde(res.permitirFinde);
-                renderizarSedes(res.sedes || []);
-                filtrarTabla();
-            });
-    }
-
-    function filtrarTabla() {
-        const sedeFiltro = document.getElementById("filtroSede").value;
-        const fechaFiltro = document.getElementById("filtroFecha").value.trim();
-        const tbody = document.getElementById("tablaAsistencias");
-        tbody.innerHTML = "";
-
-        let total = 0, completos = 0, enCurso = 0, alertas = 0;
-
-        datosGlobalesAsist.forEach(f => {
-            if (sedeFiltro !== "TODAS" && f[2] !== sedeFiltro) return;
-            if (fechaFiltro !== "" && !f[1].includes(fechaFiltro)) return;
-
-            total++;
-            if (f[6] !== "") completos++; else enCurso++;
-            if (f[12] && f[12] !== "OK") alertas++;
-
-            const linkIng = f[8] ? `<a href="${f[8]}" target="_blank">📷 Ingreso</a>` : "";
-            const linkSal = f[9] ? ` | <a href="${f[9]}" target="_blank">📷 Salida</a>` : "";
-            const clasePol = f[12] !== "OK" ? "alerta-roja" : "";
-
-            tbody.innerHTML += `<tr>
-                <td>${f[1]}</td><td><b>${f[2]}</b></td><td>${f[3]}</td><td>${f[4]}</td>
-                <td>${f[5]}</td><td>${f[6] || "--"}</td><td><b>${f[7]}</b></td>
-                <td>${linkIng}${linkSal}</td><td>${f[10]} <small>(${f[11]})</small></td>
-                <td class="${clasePol}">${f[12]}</td>
-            </tr>`;
+        let csv = "\uFEFFFecha y Hora,Sede,Trabajador,Turno,Link Foto\n";
+        data.forEach(r => {
+            const fechaLimpia = new Date(r.creado_en).toLocaleString('es-PE');
+            csv += `"${fechaLimpia}","${r.sede}","${r.trabajador}","${r.tipo_marca}","${r.foto_url || 'Sin foto'}"\n`;
         });
 
-        document.getElementById("kpiTotal").innerText = total;
-        document.getElementById("kpiCompletos").innerText = completos;
-        document.getElementById("kpiEnCurso").innerText = enCurso;
-        document.getElementById("kpiAlertas").innerText = alertas;
-    }
-
-    function renderizarSedes(sedes) {
-        const cont = document.getElementById("contenedorSedes");
-        const select = document.getElementById("filtroSede");
-        const valorPrevio = select.value;
-        cont.innerHTML = "";
-        select.innerHTML = '<option value="TODAS">📍 Todos los Centros de Labores</option>';
-
-        const baseUrl = window.location.origin + window.location.pathname;
-
-        sedes.forEach(s => {
-            const codigo = s[0];
-            const linkTrabajador = `${baseUrl}?sede=${codigo}`;
-            const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(linkTrabajador)}`;
-
-            select.innerHTML += `<option value="${codigo}">${codigo}</option>`;
-            cont.innerHTML += `<div class="sede-item">
-                <h4 style="color:var(--fc7-navy);">📍 ${codigo}</h4>
-                <img src="${qrApi}" alt="QR ${codigo}">
-                <a href="${s[3]}" target="_blank" class="btn-sm">📂 Fotos Drive</a>
-                <a href="${linkTrabajador}" target="_blank" class="btn-sm secondary">🔗 Link QR</a>
-            </div>`;
-        });
-        select.value = valorPrevio || "TODAS";
-    }
-
-    function descargarExcelCSV() {
-        const sedeFiltro = document.getElementById("filtroSede").value;
-        let csv = "\uFEFFFecha,Centro_Labores,Trabajador,Turno,Hora_Ingreso,Hora_Salida,Horas_Trabajadas,Foto_Ingreso,Foto_Salida,ID_Dispositivo,Modelo_Telefono,Politica_Nombre\n";
-        datosGlobalesAsist.forEach(f => {
-            if (sedeFiltro !== "TODAS" && f[2] !== sedeFiltro) return;
-            csv += `"${f[1]}","${f[2]}","${f[3]}","${f[4]}","${f[5]}","${f[6]}","${f[7]}","${f[8]}","${f[9]}","${f[10]}","${f[11]}","${f[12]}"\n`;
-        });
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `FullConta7_Asistencia_${sedeFiltro}_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `Reporte_${sede}_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
     }
 
-    function agregarSede() {
-        const cod = document.getElementById("nuevaSedeInput").value.trim();
-        if (!cod) return;
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "CREAR_SEDE", codigoSede: cod, nombreSede: cod }) })
-            .then(r => r.json())
-            .then(res => { mostrarModal("✅ Centro Creado", res.message); cargarDatosDashboard(); });
-    }
-
-    function registrarSubAdmin() {
-        const u = document.getElementById("subUser").value.trim();
-        const p = document.getElementById("subPass").value.trim();
-        if (!u || !p) return;
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "CREAR_SEDE" }) }); // Fallback check
-        fetch(URL_APPS_SCRIPT, { method: "POST", body: JSON.stringify({ accion: "CREAR_SUBADMIN", nuevoUser: u, nuevoPass: p, creador: "admin" }) })
-            .then(r => r.json())
-            .then(res => mostrarModal("👤 Sub-Administrador", res.message));
-    }
-
-    function mostrarModal(titulo, msj) {
-        document.getElementById("modalTitulo").innerText = titulo;
-        document.getElementById("modalMensaje").innerText = msj;
-        document.getElementById("modalGeneral").style.display = "flex";
-    }
-
-    function cerrarModal() {
-        document.getElementById("modalGeneral").style.display = "none";
-        if (camaraTomada && document.getElementById("vistaTrabajador").style.display !== "none") {
-            location.reload();
-        }
+    function generarQR() {
+        const sede = document.getElementById("selectSedeAdmin").value;
+        if(!sede) return alert("Selecciona un centro de trabajo.");
+        const urlBase = window.location.origin + window.location.pathname;
+        const linkFinal = `${urlBase}?sede=${encodeURIComponent(sede)}`;
+        const imgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(linkFinal)}`;
+        
+        const ventana = window.open("", "_blank");
+        ventana.document.write(`<div style="text-align:center; font-family:sans-serif; margin-top:50px;">
+            <h2>QR Oficial: ${sede}</h2>
+            <img src="${imgUrl}" style="margin:20px 0; border:4px solid #1E408A; border-radius:10px;">
+            <p>Imprime esta página y pégala en el centro de trabajo.</p>
+        </div>`);
     }
 </script>
 </body>
