@@ -1,0 +1,42 @@
+-- Pruebas transaccionales: todo se revierte; no deja personas ni marcas ficticias.
+begin;
+do $$
+declare a uuid; w uuid:=gen_random_uuid(); w2 uuid:=gen_random_uuid(); c public.centers; other public.centers; dev uuid:=gen_random_uuid(); req uuid:=gen_random_uuid(); payload jsonb; result jsonb; failed boolean;
+begin
+ select id into a from public.profiles where role='ADMIN';
+ if a is null then raise exception 'Crear primero el administrador'; end if;
+ insert into auth.users(id,email) values(w,'sql-test-one@example.invalid'),(w2,'sql-test-two@example.invalid');
+ perform public.attendance_command(a,'profile',jsonb_build_object('id',w,'name','Prueba Uno','code','TEST-ONE','role','WORKER'));
+ perform public.attendance_command(a,'profile',jsonb_build_object('id',w2,'name','Prueba Dos','code','TEST-TWO','role','WORKER'));
+ select * into c from public.centers order by name limit 1;
+ select * into other from public.centers where id<>c.id limit 1;
+ update public.settings set test_weekends=true;
+ perform public.attendance_command(a,'schedule',jsonb_build_object('worker_id',w,'center_id',c.id,'weekday',case when extract(isodow from now() at time zone 'America/Lima')>5 then 1 else extract(isodow from now() at time zone 'America/Lima')::int end,'shift','MAÑANA','starts','08:00','ends','13:00','valid_from','2026-01-01'));
+ payload:=jsonb_build_object('request_id',req,'device_id',dev,'center_token',c.token,'shift','MAÑANA','kind','ENTRY','agent','test');
+ result:=public.attendance_command(w,'mark',payload);
+ if result->>'kind'<>'ENTRY' then raise exception 'Ingreso falló'; end if;
+ perform public.attendance_command(w,'mark',payload);
+ if (select count(*) from public.marks where worker_id=w)<>1 then raise exception 'Reintento duplicó marcación'; end if;
+ failed:=false;
+ begin perform public.attendance_command(w,'center','{"name":"No permitido"}'); exception when others then failed:=true; end;
+ if not failed then raise exception 'Escalada de privilegios'; end if;
+ failed:=false;
+ begin perform public.attendance_command(w,'mark',payload||jsonb_build_object('request_id',gen_random_uuid(),'kind','EXIT','center_token',other.token)); exception when others then failed:=true; end;
+ if not failed then raise exception 'Salida aceptada en otro centro'; end if;
+ result:=public.attendance_command(w,'mark',payload||jsonb_build_object('request_id',gen_random_uuid(),'kind','EXIT'));
+ if result->>'kind'<>'EXIT' or (select count(*) from public.journeys where worker_id=w and exit_at is not null)<>1 then raise exception 'Salida no consolidada'; end if;
+ update public.devices set marks=3 where id=dev;
+ insert into public.schedules(worker_id,center_id,weekday,shift,starts,ends,valid_from) select w2,center_id,weekday,shift,starts,ends,valid_from from public.schedules where worker_id=w;
+ result:=public.attendance_command(w2,'mark',payload||jsonb_build_object('request_id',gen_random_uuid()));
+ if result->>'requires_confirmation'<>'true' then raise exception 'No advirtió cambio de identidad'; end if;
+ if not exists(select 1 from public.audit where actor=w2 and action='INTENTO_CAMBIO_IDENTIDAD') then raise exception 'Alerta no registrada'; end if;
+ perform public.attendance_command(a,'center','{"name":"Centro Prueba 5"}');
+ perform public.attendance_command(a,'center','{"name":"Centro Prueba 6"}');
+ failed:=false;
+ begin perform public.attendance_command(a,'center','{"name":"Centro Prueba 7"}'); exception when others then failed:=true; end;
+ if not failed then raise exception 'Permitió séptimo centro'; end if;
+ if has_function_privilege('anon','public.attendance_command(uuid,text,jsonb)','execute') then raise exception 'Función expuesta anónimamente'; end if;
+ if has_function_privilege('authenticated','public.attendance_command(uuid,text,jsonb)','execute') then raise exception 'Función expuesta a clientes'; end if;
+end $$;
+select 'PASS: ingreso, salida, reintento, centro incorrecto, identidad, límite centros, permisos' as result;
+rollback;
